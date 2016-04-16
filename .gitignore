@@ -1,0 +1,6 @@
+bin/*
+obj/*
+*.cbp
+main.cpp
+*.depend
+*build_log.html
