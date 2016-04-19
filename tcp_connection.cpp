@@ -6,18 +6,28 @@
 namespace attender
 {
 //#####################################################################################################################
-    tcp_connection::tcp_connection(boost::asio::ip::tcp::socket socket,
-                                   read_handler read_handler_inst)
+    tcp_connection::tcp_connection(boost::asio::ip::tcp::socket socket)
         : socket_{std::move(socket)}
         , buffer_(config::buffer_size)
         , write_buffer_{}
-        , read_handler_inst_{std::move(read_handler_inst)}
+        , read_callback_inst_{}
         , bytes_ready_{0}
+        , kept_alive_{nullptr}
     {
 
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::start()
+    {
+        // do_read();
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_connection::set_read_callback(read_callback const& new_read_callback)
+    {
+        read_callback_inst_ = new_read_callback;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_connection::read()
     {
         do_read();
     }
@@ -33,16 +43,13 @@ namespace attender
         socket_.async_read_some(boost::asio::buffer(buffer_),
             [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
             {
-                if (!ec)
-                {
-                    bytes_ready_ = bytes_transferred;
-                    read_handler_inst_(tcp_stream_device{self});
-                }
+                bytes_ready_ = bytes_transferred;
+                read_callback_inst_(ec);
             }
         );
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::write(std::istream& stream, write_handler const& handler)
+    void tcp_connection::write(std::istream& stream, write_callback const& handler)
     {
         auto self{shared_from_this()};
 
@@ -72,7 +79,7 @@ namespace attender
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::write(char const* cstr, std::size_t count, write_handler const& handler)
+    void tcp_connection::write(char const* cstr, std::size_t count, write_callback const& handler)
     {
         write(cstr, cstr + count, handler);
     }
@@ -87,13 +94,18 @@ namespace attender
         return std::cbegin(buffer_) + bytes_ready_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::size_t tcp_connection::ready_count() const noexcept
+    std::size_t tcp_connection::ready_count() const
     {
         return bytes_ready_;
     }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_connection::attach_lifetime_binder(lifetime_binder* ltb)
+    {
+        kept_alive_ = std::unique_ptr <lifetime_binder> (ltb);
+    }
 //#####################################################################################################################
-    tcp_stream_device::tcp_stream_device(std::shared_ptr <tcp_connection> connection)
-        : connection_{std::move(connection)}
+    tcp_stream_device::tcp_stream_device(tcp_connection* connection)
+        : connection_{connection}
         , pos_{0}
     {
     }
@@ -110,16 +122,6 @@ namespace attender
         }
 
         return -1; // EOF - no more data to read
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void tcp_stream_device::read_from_socket()
-    {
-        connection_->do_read();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    std::shared_ptr <tcp_connection> tcp_stream_device::get_connection() const
-    {
-        return connection_;
     }
 //#####################################################################################################################
 }

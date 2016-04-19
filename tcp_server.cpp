@@ -1,6 +1,8 @@
 #include "tcp_server.hpp"
 
 #include "tcp_connection.hpp"
+#include "request.hpp"
+#include "response.hpp"
 
 #include <iostream>
 
@@ -8,14 +10,13 @@ namespace attender
 {
 //#####################################################################################################################
     tcp_server::tcp_server(asio::io_service* service,
-                   read_handler on_read,
-                   accept_handler on_accept)
+                           connected_callback on_connect)
         : service_{service}
         , connections_{}
         , socket_{*service}
         , acceptor_{*service}
-        , on_read_{std::move(on_read)}
-        , on_accept_{std::move(on_accept)}
+        , on_connect_{std::move(on_connect)}
+        , on_accept_{[](boost::asio::ip::tcp::socket const&){return true;}}
     {
 
     }
@@ -52,16 +53,23 @@ namespace attender
                 if (!acceptor_.is_open())
                     return;
 
-                if (!ec)
+                if (!ec && on_accept_(socket_))
                 {
-                    on_accept_(&socket_);
-
                     std::cout << "new connection!\n";
 
-                    connections_.add(std::make_shared <tcp_connection> (
-                        std::move(socket_),
-                        on_read_
-                    ));
+                    auto shared_connection = std::make_shared <tcp_connection> (std::move(socket_));
+                    connections_.add(shared_connection);
+
+                    auto req = std::make_shared <request_handler> (shared_connection);
+                    auto res = std::make_shared <response_handler> (shared_connection);
+
+                    shared_connection->attach_lifetime_binder(new tcp_connection::lifetime_binder {req, res});
+
+                    on_connect_(req, res);
+                }
+                else if (ec)
+                {
+                    // TODO...
                 }
 
                 do_accept();

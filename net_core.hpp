@@ -9,6 +9,6 @@ namespace attender
 
     namespace config
     {
-        constexpr static std::size_t buffer_size = 1024;
+        constexpr static std::size_t buffer_size = 10;
     }
 }

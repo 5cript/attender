@@ -4,3 +4,4 @@ obj/*
 main.cpp
 *.depend
 *build_log.html
+*.layout
