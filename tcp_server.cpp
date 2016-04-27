@@ -10,15 +10,16 @@ namespace attender
 {
 //#####################################################################################################################
     tcp_server::tcp_server(asio::io_service* service,
-                           connected_callback on_connect)
+                           connected_callback on_connect,
+                           error_callback on_error)
         : service_{service}
         , connections_{}
         , socket_{*service}
         , acceptor_{*service}
         , on_connect_{std::move(on_connect)}
         , on_accept_{[](boost::asio::ip::tcp::socket const&){return true;}}
+        , on_error_{std::move(on_error)}
     {
-
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_server::~tcp_server()
@@ -60,12 +61,20 @@ namespace attender
                     auto shared_connection = std::make_shared <tcp_connection> (std::move(socket_));
                     connections_.add(shared_connection);
 
-                    auto req = std::make_shared <request_handler> (shared_connection);
                     auto res = std::make_shared <response_handler> (shared_connection);
+                    auto req = std::make_shared <request_handler> (shared_connection);
 
                     shared_connection->attach_lifetime_binder(new tcp_connection::lifetime_binder {req, res});
 
-                    on_connect_(req, res);
+                    req->initiate_header_read(
+                        [this, res, req](boost::system::error_code ec)
+                        {
+                            if (!ec)
+                                on_connect_(req, res);
+                            else
+                                on_error_(ec);
+                        }
+                    );
                 }
                 else if (ec)
                 {

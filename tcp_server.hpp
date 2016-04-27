@@ -11,7 +11,8 @@ namespace attender
     {
     public:
         tcp_server(asio::io_service* service,
-                   connected_callback on_connect);
+                   connected_callback on_connect,
+                   error_callback on_error);
         ~tcp_server();
 
         void start(std::string const& port, std::string const& host = "0.0.0.0") override;
@@ -28,5 +29,6 @@ namespace attender
         boost::asio::ip::tcp::endpoint local_endpoint_;
         connected_callback on_connect_;
         accept_callback on_accept_;
+        error_callback on_error_;
     };
 }
