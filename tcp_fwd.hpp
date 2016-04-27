@@ -12,11 +12,16 @@ namespace attender
     class response_handler;
     class request_header;
     class request_parser;
+    class tcp_read_sink;
 
-    using read_callback = std::function <void(boost::system::error_code /* ec */)>;
-    using write_callback = std::function <void(boost::system::error_code /* ec */, std::shared_ptr <tcp_connection> /* connection */)>;
+    using custom_callback = std::function <void(boost::system::error_code /* ec */)>;
+
+    using read_callback = custom_callback;
+    using write_callback = custom_callback;
+    using parse_callback = custom_callback;
+    using error_callback = custom_callback;
+
     using accept_callback = std::function <bool(boost::asio::ip::tcp::socket const& /* sock */)>;
     using connected_callback = std::function <void(std::shared_ptr <request_handler> request,
                                                    std::shared_ptr <response_handler> response)>;
-    using parse_callback = std::function <void(request_header header)>;
 }
