@@ -28,6 +28,8 @@ namespace attender
     public:
         explicit tcp_connection(boost::asio::ip::tcp::socket socket);
 
+        ~tcp_connection();
+
         /**
          *  Starts asynchronous reading.
          */
@@ -59,7 +61,7 @@ namespace attender
             boost::asio::async_write(socket_, boost::asio::buffer(write_buffer_),
                 [this, self, &handler](boost::system::error_code ec, std::size_t)
                 {
-                    handler(ec, self);
+                    handler(ec);
                 }
             );
         }
@@ -83,22 +85,54 @@ namespace attender
         void write(std::istream& stream, write_callback const& handler);
 
         /**
+         *  This function writes the string onto the tcp stream.
+         *  The handler function is called when the write operation completes.
+         *  Do not (!) call write while another write operation is in progress!
+         */
+        void write(std::string const& string, write_callback const& handler);
+
+        /**
          *  This function writes the char buffer onto the tcp stream.
          *  The handler function is called when the write operation completes.
          *  Do not (!) call write while another write operation is in progress!
          */
         void write(char const* cstr, std::size_t count, write_callback const& handler);
 
+        /**
+         *  Sets the read callback, which is called when a read operation finishes.
+         */
         void set_read_callback(read_callback const& new_read_callback);
 
+        /**
+         *  Read more bytes into the buffer. This will overwrite the buffer.
+         */
         void read();
 
+        /**
+         *  Returns the amount of bytes that remain in the read buffer.
+         *
+         *  @return A number of bytes that can be taken from the buffer.
+         */
         std::size_t ready_count() const;
+
+        /**
+         *  Returns the beginning of the read buffer.
+         *
+         *  @return An iterator to the read buffer.
+         */
+        buffer_iterator begin() const;
+
+        /**
+         *  Returns the end of the read buffer.
+         *
+         *  @return An iterator to the read buffer.
+         */
+        buffer_iterator end() const;
+
+        std::vector <char>& get_read_buffer();
 
     private:
         void do_read();
-        buffer_iterator begin() const;
-        buffer_iterator end() const;
 
         void attach_lifetime_binder(lifetime_binder* ltb);
 

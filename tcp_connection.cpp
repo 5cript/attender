@@ -17,6 +17,11 @@ namespace attender
 
     }
 //---------------------------------------------------------------------------------------------------------------------
+    tcp_connection::~tcp_connection()
+    {
+        std::cout << "connection died\n";
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::start()
     {
         // do_read();
@@ -66,17 +71,22 @@ namespace attender
                         if (stream.gcount() == config::buffer_size)
                             write(stream, handler);
                         else
-                            handler(ec, self);
+                            handler(ec);
                     }
                     else
-                        handler(ec, self);
+                        handler(ec);
                 }
             );
         }
         else
         {
-            handler({}, self);
+            handler({});
         }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_connection::write(std::string const& string, write_callback const& handler)
+    {
+        write(string.c_str(), string.size(), handler);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::write(char const* cstr, std::size_t count, write_callback const& handler)
@@ -92,6 +102,11 @@ namespace attender
     tcp_connection::buffer_iterator tcp_connection::end() const
     {
         return std::cbegin(buffer_) + bytes_ready_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::vector <char>& tcp_connection::get_read_buffer()
+    {
+        return buffer_;
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::size_t tcp_connection::ready_count() const
