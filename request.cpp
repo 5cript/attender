@@ -2,6 +2,7 @@
 
 #include "tcp_connection.hpp"
 #include "tcp_read_sink.hpp"
+#include "tcp_server_interface.hpp"
 
 #include <string>
 #include <iostream>
@@ -36,16 +37,15 @@ namespace attender
         if (ec)
             on_parse_(ec);
 
-        auto* ptr = connection_.get();
         parser_.feed(connection_.get());
 
         if (parser_.finished())
             on_parse_({});
     }
 //---------------------------------------------------------------------------------------------------------------------
-    readable_request_handler request_handler::initiate_read(read_callback callback)
+    void request_handler::set_parameters(std::unordered_map <std::string, std::string> const& params)
     {
-        return readable_request_handler(this, std::move(callback)); // DO NOT BREAK HERE!!!!
+        params_ = params;
     }
 //---------------------------------------------------------------------------------------------------------------------
     uint64_t request_handler::get_content_length() const
@@ -58,53 +58,92 @@ namespace attender
         if (body_length == header.fields.end())
             throw std::runtime_error("no content length field provided for reading body");
 
-        // throws if Content-Length is not a anumber
+        // throws if Content-Length is not a number
         return boost::lexical_cast <uint64_t> (body_length->second);
     }
-//#####################################################################################################################
-    readable_request_handler::readable_request_handler(request_handler* parent, read_callback callback)
-        : res_(parent)
-        , callback_(std::move(callback))
-    {
-        res_->connection_->set_read_callback([this](boost::system::error_code ec) {
-            body_read_handler(ec);
-        });
-    }
 //---------------------------------------------------------------------------------------------------------------------
-    void readable_request_handler::body_read_handler(boost::system::error_code ec)
+    void request_handler::body_read_handler(boost::system::error_code ec)
     {
         if (ec)
         {
-            std::cerr << "-";
+            on_finished_read_.error(ec);
+            return;
         }
 
-        res_->sink_->write(res_->connection_->get_read_buffer());
+        sink_->write(connection_->get_read_buffer());
 
-        auto remaining = res_->get_content_length() - res_->sink_->get_bytes_written();
+        auto remaining = get_content_length() - sink_->get_bytes_written();
 
         if (remaining == 0)
-            callback_({});
+            on_finished_read_.fullfill();
         else
-            res_->connection_->read();
+            connection_->read();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void readable_request_handler::read_body(std::ostream& stream)
+    callback_wrapper& request_handler::read_body(std::ostream& stream)
     {
+        // rearrange the callback for body reading.
+        connection_->set_read_callback([this](boost::system::error_code ec) {
+            body_read_handler(ec);
+        });
+
         // assign a sink, which prevails the asynchronous structure.
-        res_->sink_.reset(new tcp_stream_sink(&stream));
+        sink_.reset(new tcp_stream_sink(&stream));
 
         // write what we already have read by parsing the header
-        auto body_begin = res_->parser_.get_buffer(); // start of body
-        res_->sink_->write(body_begin.c_str(), body_begin.size());
+        auto body_begin = parser_.get_buffer(); // start of body
+        sink_->write(body_begin.c_str(), body_begin.size());
 
-        std::cout << res_->get_content_length() << "\n";
+        std::cout << get_content_length() << "\n";
         std::cout << body_begin.size() << "\n";
 
         // read more if more data is to be expected.
-        if (res_->get_content_length() - body_begin.size() > 0)
-            res_->connection_->read();
+        if (get_content_length() - body_begin.size() > 0)
+            connection_->read();
         else
-            callback_({});
+            on_finished_read_.fullfill();
+
+        return on_finished_read_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_handler::hostname() const
+    {
+        if (connection_->get_parent()->get_settings().trust_proxy)
+        {
+            auto xhost = parser_.get_field("X-Forwarded-Host");
+            if (xhost)
+                return xhost.get();
+        }
+
+        auto host = parser_.get_field("Host");
+        if (host)
+            return host.get();
+
+        return "";
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_handler::ip() const
+    {
+        return connection_->get_socket()->remote_endpoint().address().to_string();
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_handler::method() const
+    {
+        return parser_.get_header().verb;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_handler::url() const
+    {
+        return parser_.get_header().path;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_handler::param(std::string const& key) const
+    {
+        auto parm = params_.find(key);
+        if (parm = std::end(params_))
+            throw std::runtime_error("key is valid for this request");
+
+        return parm->second;
     }
 //#####################################################################################################################
 }

@@ -6,8 +6,9 @@
 namespace attender
 {
 //#####################################################################################################################
-    tcp_connection::tcp_connection(boost::asio::ip::tcp::socket socket)
-        : socket_{std::move(socket)}
+    tcp_connection::tcp_connection(tcp_server_interface* parent, boost::asio::ip::tcp::socket socket)
+        : parent_(parent)
+        , socket_{std::move(socket)}
         , buffer_(config::buffer_size)
         , write_buffer_{}
         , read_callback_inst_{}
@@ -117,6 +118,16 @@ namespace attender
     void tcp_connection::attach_lifetime_binder(lifetime_binder* ltb)
     {
         kept_alive_ = std::unique_ptr <lifetime_binder> (ltb);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    tcp_server_interface* tcp_connection::get_parent()
+    {
+        return parent_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    asio::ip::tcp::socket* tcp_connection::get_socket()
+    {
+        return &socket_;
     }
 //#####################################################################################################################
     tcp_stream_device::tcp_stream_device(tcp_connection* connection)

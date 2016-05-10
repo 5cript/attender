@@ -10,13 +10,15 @@ namespace attender
 {
 //#####################################################################################################################
     tcp_server::tcp_server(asio::io_service* service,
-                           connected_callback on_connect,
-                           error_callback on_error)
+                           error_callback on_error,
+                           settings setting)
         : service_{service}
-        , connections_{}
         , socket_{*service}
         , acceptor_{*service}
-        , on_connect_{std::move(on_connect)}
+        , local_endpoint_{}
+        , connections_{}
+        , router_{}
+        , settings_{std::move(setting)}
         , on_accept_{[](boost::asio::ip::tcp::socket const&){return true;}}
         , on_error_{std::move(on_error)}
     {
@@ -46,6 +48,16 @@ namespace attender
         acceptor_.close();
     }
 //---------------------------------------------------------------------------------------------------------------------
+    settings tcp_server::get_settings() const
+    {
+        return settings_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_server::get(std::string path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("GET", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void tcp_server::do_accept()
     {
         acceptor_.async_accept(socket_,
@@ -58,7 +70,7 @@ namespace attender
                 {
                     std::cout << "new connection!\n";
 
-                    auto shared_connection = std::make_shared <tcp_connection> (std::move(socket_));
+                    auto shared_connection = std::make_shared <tcp_connection> (this, std::move(socket_));
                     connections_.add(shared_connection);
 
                     auto res = std::make_shared <response_handler> (shared_connection);
@@ -69,10 +81,23 @@ namespace attender
                     req->initiate_header_read(
                         [this, res, req](boost::system::error_code ec)
                         {
-                            if (!ec)
-                                on_connect_(req, res);
-                            else
+                            // finished header parsing.
+                            if (ec)
+                            {
                                 on_error_(ec);
+                                return;
+                            }
+
+                            auto maybeRoute = router_.find_route(req->get_header());
+                            if (maybeRoute)
+                            {
+                                req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().path));
+                                maybeRoute.get().get_callback()(req, res);
+                            }
+                            else
+                            {
+                                // TODO: 404
+                            }
                         }
                     );
                 }

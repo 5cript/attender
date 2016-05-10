@@ -23,6 +23,15 @@ namespace attender
         return header_;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    boost::optional <std::string> request_parser::get_field(std::string const& key) const
+    {
+        auto value = header_.fields.find(key);
+        if (value != std::end(header_.fields))
+            return value->second;
+
+        return boost::none;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     bool request_parser::finished() const
     {
         return progress_ == internal::parser_progress::body;

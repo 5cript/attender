@@ -3,9 +3,14 @@
 #include <boost/asio.hpp>
 #include <memory>
 
+#ifdef DELETE
+#   undef DELETE
+#endif // DELETE
+
 namespace attender
 {
     class tcp_connection;
+    class tcp_server_interface;
     class tcp_server;
     class tcp_stream_device;
     class request_handler;

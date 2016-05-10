@@ -3,17 +3,18 @@
 #include "tcp_fwd.hpp"
 #include "request_header.hpp"
 #include "request_parser.hpp"
+#include "callback_wrapper.hpp"
 
 #include <iosfwd>
+#include <boost/thread/future.hpp>
+#include <unordered_map>
 
 namespace attender
 {
-    class readable_request_handler;
-
 //#####################################################################################################################
     class request_handler
     {
-        friend readable_request_handler;
+        friend tcp_server;
 
     public:
         request_handler(std::shared_ptr <tcp_connection> connection);
@@ -25,36 +26,69 @@ namespace attender
          */
         request_header get_header() const;
 
-        void initiate_header_read(parse_callback on_parse);
+        callback_wrapper& read_body(std::ostream& stream);
 
-        readable_request_handler initiate_read(read_callback callback);
+        /**
+         *  Contains the hostname derived from the Host HTTP header.
+         *  When the trust proxy setting does not evaluate to false,
+         *  this property will instead have the value of the X-Forwarded-Host header field.
+         *  This header can be set by the client or by the proxy.
+         *
+         *  @return Returns host name from header.
+         */
+        std::string hostname() const;
+
+        /**
+         *  Contains the remote IP address of the request.
+         *  This ip is taken from the system.
+         *
+         *  @return remote ip.
+         */
+        std::string ip() const;
+
+        /**
+         *  Returns a string corresponding to the HTTP method of the request: GET, POST, PUT, and so on.
+         *
+         *  @return request method / verb.
+         */
+        std::string method() const;
+
+        /**
+         *  Returns the original request url.
+         *
+         *  @return request url.
+         */
+        std::string url() const;
+
+        /**
+         *  Returns parsed url parameters by key.
+         *  e.g.: /api/:param1/:param2, :param1 and :param2 are the parameters.
+         *
+         *  @param key A path parameter key. Leading colon can be omitted.
+         */
+        std::string param(std::string const& key) const;
 
     private:
         // read handlers
         void header_read_handler(boost::system::error_code ec);
+        void body_read_handler(boost::system::error_code ec);
+
+    private:
+        // internals
         uint64_t get_content_length() const;
+
+    private:
+        // befriended
+        void initiate_header_read(parse_callback on_parse);
+        void set_parameters(std::unordered_map <std::string, std::string> const& params);
 
     private:
         request_parser parser_;
         std::shared_ptr <tcp_connection> connection_;
         std::shared_ptr <tcp_read_sink> sink_;
         parse_callback on_parse_;
-    };
-//#####################################################################################################################
-    class readable_request_handler
-    {
-        friend request_handler;
-
-    public:
-        void read_body(std::ostream& stream);
-
-    private:
-        readable_request_handler(request_handler* parent, read_callback callback);
-        void body_read_handler(boost::system::error_code ec);
-
-    private:
-        request_handler* res_;
-        read_callback callback_;
+        std::unordered_map <std::string, std::string> params_;
+        callback_wrapper on_finished_read_;
     };
 //#####################################################################################################################
 }

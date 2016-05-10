@@ -26,7 +26,7 @@ namespace attender
         using lifetime_binder = lifetime_binding <request_handler, response_handler>;
 
     public:
-        explicit tcp_connection(boost::asio::ip::tcp::socket socket);
+        explicit tcp_connection(tcp_server_interface* parent, boost::asio::ip::tcp::socket socket);
 
         ~tcp_connection();
 
@@ -131,12 +131,17 @@ namespace attender
 
         std::vector <char>& get_read_buffer();
 
+        tcp_server_interface* get_parent();
+
+        asio::ip::tcp::socket* get_socket();
+
     private:
         void do_read();
 
         void attach_lifetime_binder(lifetime_binder* ltb);
 
     private:
+        tcp_server_interface* parent_;
         asio::ip::tcp::socket socket_;
         std::vector <char> buffer_;
         std::vector <char> write_buffer_;
