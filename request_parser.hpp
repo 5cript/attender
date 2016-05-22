@@ -42,7 +42,7 @@ namespace attender
         bool parse_words();
 
     private:
-        request_header header_;
+        request_header_intermediate header_;
         std::string header_buffer_;
         internal::parser_progress progress_;
         int field_parse_counter_;

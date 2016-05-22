@@ -61,12 +61,47 @@ namespace attender
         std::string url() const;
 
         /**
-         *  Returns parsed url parameters by key.
+         *  Returns parsed path parameters by key.
          *  e.g.: /api/:param1/:param2, :param1 and :param2 are the parameters.
          *
          *  @param key A path parameter key. Leading colon can be omitted.
+         *
+         *  @return Returns the path part that contains the key.
          */
         std::string param(std::string const& key) const;
+
+        /**
+         *  Contains the path part of the request URL.
+         *
+         *  @return Returns a path, such as /api/path
+         */
+        std::string path() const;
+
+        /**
+         *  Returns the underlying protocol.
+         *  Will allways be 'http', unless TLS is used, in which case it will be 'https'
+         */
+        std::string protocol() const;
+
+        /**
+         *  Retrieves a query value for a given key.
+         */
+        boost::optional <std::string> query(std::string const& key) const;
+
+        /**
+         *  Will return whether this is an encrypted connection or not.
+         */
+        bool secure() const;
+
+        /**
+         *  Returns a header field from the request header.
+         *  e.g.: get_header_field("Host") -> "localhost".
+         *
+         *  @param key The header fields key.
+         *
+         *  @return The Header fields value or boost::none.
+         */
+        boost::optional <std::string> get_header_field(std::string const& key) const;
 
     private:
         // read handlers
@@ -84,6 +119,7 @@ namespace attender
 
     private:
         request_parser parser_;
+        request_header header_;
         std::shared_ptr <tcp_connection> connection_;
         std::shared_ptr <tcp_read_sink> sink_;
         parse_callback on_parse_;

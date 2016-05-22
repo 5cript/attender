@@ -78,11 +78,12 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     bool route::matches(request_header const& header) const
     {
-        if (header.verb != method_)
+        if (header.get_method() != method_)
             return false;
 
         std::deque <std::string> passed_parts;
-        boost::split(passed_parts, header.url, boost::is_any_of("/"));
+        auto path = header.get_path();
+        boost::split(passed_parts, path, boost::is_any_of("/"));
         passed_parts.pop_front();
 
         std::cout << passed_parts.size() << "\n";

@@ -20,7 +20,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     request_header request_parser::get_header() const
     {
-        return header_;
+        return {header_};
     }
 //---------------------------------------------------------------------------------------------------------------------
     boost::optional <std::string> request_parser::get_field(std::string const& key) const
@@ -94,14 +94,14 @@ namespace attender
     {
         if (progress_ == internal::parser_progress::verb)
         {
-            if (!get_word_from_buffer(header_.verb))
+            if (!get_word_from_buffer(header_.method))
                 return false;
             progress_ = internal::parser_progress::url;
         }
 
         if (progress_ == internal::parser_progress::url)
         {
-            if (!get_word_from_buffer(header_.path))
+            if (!get_word_from_buffer(header_.url))
                 return false;
             progress_ = internal::parser_progress::protocol_and_version;
         }

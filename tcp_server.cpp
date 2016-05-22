@@ -91,7 +91,7 @@ namespace attender
                             auto maybeRoute = router_.find_route(req->get_header());
                             if (maybeRoute)
                             {
-                                req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().path));
+                                req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().get_path()));
                                 maybeRoute.get().get_callback()(req, res);
                             }
                             else
