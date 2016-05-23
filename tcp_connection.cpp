@@ -41,6 +41,13 @@ namespace attender
     void tcp_connection::stop()
     {
         socket_.close();
+        kept_alive_.reset(nullptr);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_connection::shutdown()
+    {
+        boost::system::error_code ignored_ec;
+        socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::do_read()
@@ -55,7 +62,7 @@ namespace attender
         );
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::write(std::istream& stream, write_callback const& handler)
+    void tcp_connection::write(std::istream& stream, write_callback handler)
     {
         auto self{shared_from_this()};
 
@@ -65,17 +72,17 @@ namespace attender
         if (stream.gcount() != 0)
         {
             boost::asio::async_write(socket_, boost::asio::buffer(write_buffer_),
-                [this, self, handler, &stream](boost::system::error_code ec, std::size_t)
+                [this, self, cb{handler}, &stream](boost::system::error_code ec, std::size_t)
                 {
                     if (!ec)
                     {
                         if (stream.gcount() == config::buffer_size)
-                            write(stream, handler);
+                            write(stream, cb);
                         else
-                            handler(ec);
+                            cb(ec);
                     }
                     else
-                        handler(ec);
+                        cb(ec);
                 }
             );
         }
@@ -85,14 +92,14 @@ namespace attender
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::write(std::string const& string, write_callback const& handler)
+    void tcp_connection::write(std::vector <char> const& container, write_callback handler)
     {
-        write(string.c_str(), string.size(), handler);
+        write(std::begin(container), std::end(container), handler);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::write(char const* cstr, std::size_t count, write_callback const& handler)
+    void tcp_connection::write(std::string const& string, write_callback handler)
     {
-        write(cstr, cstr + count, handler);
+        write(std::begin(string), std::end(string), handler);
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection::buffer_iterator tcp_connection::begin() const

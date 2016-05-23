@@ -37,6 +37,7 @@ namespace attender
 
         /**
          *  Closes the socket and aborts all messaging
+         *  Also removes the livetime bindings
          */
         void stop();
 
@@ -51,7 +52,7 @@ namespace attender
          *  Do not (!) call write while another write operation is in progress!
          */
         template <typename IteratorT>
-        void write(IteratorT const& begin, IteratorT const& end, write_callback const& handler)
+        void write(IteratorT&& begin, IteratorT&& end, write_callback handler)
         {
             write_buffer_.resize(end - begin);
             std::copy(begin, end, write_buffer_.begin());
@@ -59,7 +60,7 @@ namespace attender
             auto self{shared_from_this()};
 
             boost::asio::async_write(socket_, boost::asio::buffer(write_buffer_),
-                [this, self, &handler](boost::system::error_code ec, std::size_t)
+                [this, self, handler](boost::system::error_code ec, std::size_t)
                 {
                     handler(ec);
                 }
@@ -71,32 +72,21 @@ namespace attender
          *  The handler function is called when the write operation completes.
          *  Do not (!) call write while another write operation is in progress!
          */
-        template <template <typename T, typename> class ContainerT, typename Allocator = std::allocator <char> >
-        void write(ContainerT <char, Allocator> const& container, write_callback const& handler)
-        {
-            write(std::begin(container), std::end(container), handler);
-        }
+        void write(std::vector <char> const& container, write_callback handler) override;
 
         /**
          *  This function writes the istream onto the tcp stream.
          *  The handler function is called when the write operation completes.
          *  Do not (!) call write while another write operation is in progress!
          */
-        void write(std::istream& stream, write_callback const& handler);
+        void write(std::istream& stream, write_callback handler) override;
 
         /**
          *  This function writes the string onto the tcp stream.
          *  The handler function is called when the write operation completes.
          *  Do not (!) call write while another write operation is in progress!
          */
-        void write(std::string const& string, write_callback const& handler);
-
-        /**
-         *  This function writes the char buffer onto the tcp stream.
-         *  The handler function is called when the write operation completes.
-         *  Do not (!) call write while another write operation is in progress!
-         */
-        void write(char const* cstr, std::size_t count, write_callback const& handler);
+        void write(std::string const& string, write_callback handler) override;
 
         /**
          *  Sets the read callback, which is called when a read operation finishes.
@@ -129,10 +119,21 @@ namespace attender
          */
         buffer_iterator end() const;
 
+        /**
+         *  Returns the read buffer.
+         *  Used in request_handler class.
+         */
         std::vector <char>& get_read_buffer();
 
-        tcp_server_interface* get_parent();
+        /**
+         *  Returns the tcp server behind this tcp connection.
+         *  Do not abuse.
+         */
+        tcp_server_interface* get_parent() override;
 
+        /**
+         *  Return the associated socket.
+         */
         asio::ip::tcp::socket* get_socket();
 
     private:
