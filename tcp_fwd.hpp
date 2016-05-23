@@ -9,16 +9,23 @@
 
 namespace attender
 {
-    class tcp_connection;
+    class connection_manager;
+
     class tcp_server_interface;
     class tcp_server;
+
     class tcp_stream_device;
-    class request_handler;
-    class response_handler;
-    class response_header;
+    class tcp_read_sink;
+
+    class tcp_connection_interface;
+    class tcp_connection;
+
     class request_header;
     class request_parser;
-    class tcp_read_sink;
+    class request_handler;
+
+    class response_handler;
+    class response_header;
 
     using custom_callback = std::function <void(boost::system::error_code /* ec */)>;
 
