@@ -5,13 +5,18 @@ namespace attender
 //#####################################################################################################################
     void connection_manager::add(shared_connection connection)
     {
+        std::lock_guard <std::mutex> guard (connectionsLock_);
+
         connections_.insert(connection);
         connection->start();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void connection_manager::remove(shared_connection connection)
     {
+        std::lock_guard <std::mutex> guard (connectionsLock_);
+
         connections_.erase(connection);
+        connection->shutdown();
         connection->stop();
     }
 //---------------------------------------------------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 #include "tcp_connection_interface.hpp"
 
 #include <unordered_set>
+#include <mutex>
 
 namespace attender
 {
@@ -19,5 +20,7 @@ namespace attender
 
     private:
         std::unordered_set <shared_connection> connections_;
+
+        std::mutex connectionsLock_;
     };
 }
