@@ -1,4 +1,4 @@
-#include
+#include "response_header.hpp"
 
 namespace attender
 {
@@ -53,9 +53,13 @@ namespace attender
         return message_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    boost::optional <std::string> get_field() const
+    boost::optional <std::string> response_header::get_field(std::string const& key) const
     {
-
+        auto iter = fields_.find(key);
+        if (iter != std::end(fields_))
+            return iter->second;
+        else
+            return boost::none;
     }
 //#####################################################################################################################
 }

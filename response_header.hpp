@@ -31,7 +31,7 @@ namespace attender
         std::string get_version() const;
         int get_code() const;
         std::string get_message() const;
-        boost::optional <std::string> get_field() const;
+        boost::optional <std::string> get_field(std::string const& key) const;
 
     private:
         std::string protocol_; // example: HTTP
