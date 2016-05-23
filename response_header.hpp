@@ -11,7 +11,7 @@ namespace attender
     class response_header
     {
     public:
-        response_header() = default;
+        response_header();
 
         // default behaviour for big 5
         response_header(response_header const&) = default;
@@ -32,6 +32,9 @@ namespace attender
         int get_code() const;
         std::string get_message() const;
         boost::optional <std::string> get_field(std::string const& key) const;
+        bool has_field(std::string const& key) const;
+
+        std::string to_string() const;
 
     private:
         std::string protocol_; // example: HTTP

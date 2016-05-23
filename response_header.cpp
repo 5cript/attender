@@ -1,8 +1,21 @@
 #include "response_header.hpp"
+#include "response_code.hpp"
+
+#include <sstream>
 
 namespace attender
 {
 //#####################################################################################################################
+    response_header::response_header()
+        : protocol_{"HTTP"}
+        , version_{"2.0"}
+        , code_{204}
+        , message_{translate_code(code_)}
+        , fields_{}
+    {
+
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void response_header::set_protocol(std::string const& protocol)
     {
         protocol_ = protocol;
@@ -16,6 +29,7 @@ namespace attender
     void response_header::set_code(int code)
     {
         code_ = code;
+        message_ = translate_code(code);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void response_header::set_message(std::string const& message)
@@ -60,6 +74,23 @@ namespace attender
             return iter->second;
         else
             return boost::none;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    bool response_header::has_field(std::string const& key) const
+    {
+        return fields_.find(key) != std::end(fields_);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string response_header::to_string() const
+    {
+        std::stringstream sstr;
+        sstr << protocol_ << '/' << version_ << ' ' << code_ << ' ' << message_ << "\r\n";
+        for (auto const& i : fields_)
+        {
+            sstr << i.first << ": " << i.second << "\r\n";
+        }
+        sstr << "\r\n";
+        return sstr.str();
     }
 //#####################################################################################################################
 }
