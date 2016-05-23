@@ -22,6 +22,7 @@ namespace attender
         settings get_settings() const override;
 
         void get(std::string path_template, connected_callback const& on_connect);
+        connection_manager* get_connections() override;
 
     private:
         void do_accept();

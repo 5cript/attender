@@ -29,6 +29,11 @@ namespace attender
         stop();
     }
 //---------------------------------------------------------------------------------------------------------------------
+    connection_manager* tcp_server::get_connections()
+    {
+        return &connections_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void tcp_server::start(std::string const& port, std::string const& host)
     {
         stop();
