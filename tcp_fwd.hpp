@@ -15,6 +15,7 @@ namespace attender
     class tcp_stream_device;
     class request_handler;
     class response_handler;
+    class response_header;
     class request_header;
     class request_parser;
     class tcp_read_sink;
