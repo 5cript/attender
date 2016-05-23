@@ -86,9 +86,6 @@ namespace attender
         boost::split(passed_parts, path, boost::is_any_of("/"));
         passed_parts.pop_front();
 
-        std::cout << passed_parts.size() << "\n";
-        std::cout << path_parts_.size() << "\n";
-
         if (passed_parts.size() != path_parts_.size())
             return false;
 
@@ -105,8 +102,9 @@ namespace attender
     {
         std::unordered_map <std::string, std::string> result;
 
-        std::vector <std::string> passed_parts;
+        std::deque <std::string> passed_parts;
         boost::split(passed_parts, path, boost::is_any_of("/"));
+        passed_parts.pop_front();
 
         for (std::size_t i = 0u; i != path_parts_.size(); ++i)
         {
