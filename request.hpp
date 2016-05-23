@@ -18,6 +18,7 @@ namespace attender
 
     public:
         request_handler(std::shared_ptr <tcp_connection> connection);
+        ~request_handler();
 
         /**
          *  Returns the request header.

@@ -22,6 +22,11 @@ namespace attender
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
+    request_handler::~request_handler()
+    {
+        std::cout << "request destroyed\n";
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void request_handler::initiate_header_read(parse_callback on_parse)
     {
         on_parse_ = on_parse;
