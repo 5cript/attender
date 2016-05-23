@@ -30,6 +30,11 @@ namespace attender
         return version_;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    std::string request_header::get_fragment() const
+    {
+        return fragment_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     boost::optional <std::string> request_header::get_field(std::string const& key) const
     {
         auto iter = fields_.find(key);

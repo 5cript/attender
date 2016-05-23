@@ -25,6 +25,7 @@ namespace attender
         std::string get_url() const;
         std::string get_protocol() const;
         std::string get_version() const;
+        std::string get_fragment() const;
 
         boost::optional <std::string> get_field(std::string const& key) const;
         boost::optional <std::string> get_query(std::string const& key) const;
