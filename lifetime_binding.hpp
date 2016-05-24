@@ -3,16 +3,11 @@
 #include <memory>
 #include <tuple>
 
+#include <boost/fusion/adapted/std_tuple.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 
 namespace attender
 {
-    namespace internal
-    {
-        template <typename TupT>
-        struct reset_all;
-    }
-
     template <typename... List>
     class lifetime_binding
     {
@@ -22,15 +17,8 @@ namespace attender
         {
         }
 
-        void free()
-        {
-            boost::fusion::for_each(kept_alive, [](auto const& sptr){
-                sptr->reset();
-            });
-        }
-
-        lifetime_binding& operator=(lifetime_binding&&) = default;
-        lifetime_binding(lifetime_binding&&) = default;
+        lifetime_binding& operator=(lifetime_binding&&) = delete;
+        lifetime_binding(lifetime_binding&&) = delete;
 
     private:
         std::tuple <std::shared_ptr <List>...> kept_alive;

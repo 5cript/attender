@@ -103,6 +103,16 @@ namespace attender
         void send_status(int code);
 
         /**
+         *  Performs a redirect to a different url or path.
+         *  This only sets the code and "Location" header field.
+         *  This still has to be completed with an end statement (send, end)
+         *
+         *  @param where Where to redirect to.
+         *  @param code A response code to send. Defaults to 302.
+         */
+        response_handler& redirect(std::string const& where, int code = 302);
+
+        /**
          *  Ends the response process.
          *  Use to quickly end the response without any data. If you need to respond with data,
          *  instead use methods such as send and json.

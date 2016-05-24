@@ -59,6 +59,13 @@ namespace attender
         return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    response_handler& response_handler::redirect(std::string const& where, int code)
+    {
+        header_.set_code(code);
+        header_.set_field("Location", where);
+        return *this;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void response_handler::send(std::string const& body)
     {
         try_set("Content-Length", std::to_string(body.length()));
@@ -86,6 +93,7 @@ namespace attender
         send_header([this](boost::system::error_code ec){
             connection_->shutdown();
             connection_->get_parent()->get_connections()->remove(connection_);
+            // further use of this is invalid from here.
         });
     }
 //---------------------------------------------------------------------------------------------------------------------

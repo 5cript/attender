@@ -52,9 +52,8 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::do_read()
     {
-        auto self{shared_from_this()};
         socket_.async_read_some(boost::asio::buffer(buffer_),
-            [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
+            [this, self{shared_from_this()}](boost::system::error_code ec, std::size_t bytes_transferred)
             {
                 bytes_ready_ = bytes_transferred;
                 read_callback_inst_(ec);
@@ -64,15 +63,13 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::write(std::istream& stream, write_callback handler)
     {
-        auto self{shared_from_this()};
-
         write_buffer_.resize(config::buffer_size);
         stream.read(write_buffer_.data(), config::buffer_size);
 
         if (stream.gcount() != 0)
         {
             boost::asio::async_write(socket_, boost::asio::buffer(write_buffer_),
-                [this, self, cb{handler}, &stream](boost::system::error_code ec, std::size_t)
+                [this, self{shared_from_this()}, cb{handler}, &stream](boost::system::error_code ec, std::size_t)
                 {
                     if (!ec)
                     {
