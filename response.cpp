@@ -1,6 +1,7 @@
 #include "response.hpp"
 #include "tcp_connection.hpp"
 #include "tcp_server.hpp"
+#include "mime.hpp"
 
 #include <iostream>
 
@@ -105,6 +106,25 @@ namespace attender
         {
             continuation({});
         }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    response_handler& response_handler::type(std::string const& mime)
+    {
+        auto set_type = [this](std::string const& what)
+        {
+            if (what.empty())
+                throw std::invalid_argument("could not find appropriate mime type from extension");
+            header_.set_field("Content-Type", what);
+        };
+
+        if (mime.find('/') != std::string::npos)
+            set_type(mime);
+        else if (!mime.empty() && mime.front() == '.')
+            set_type(extension_to_mime(mime));
+        else
+            set_type(search_mime(mime));
+
+        return *this;
     }
 //#####################################################################################################################
 }

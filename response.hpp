@@ -47,6 +47,26 @@ namespace attender
         response_handler& status(int code);
 
         /**
+         *  Performs a mime type lookup and sets the Content-Type to the appropriate value.
+         *  If the string contains a slash, it will just take the parameter "mime" as the type.
+         *  If the string starts with a dot, it will try to interpret it as a file extension.
+         *  Otherwise, it will try to find it in a list.
+         *  This function will throw if no mime type could be matched.
+         *  Please do note, that the convenience for writing "png" instead of "image/png" results
+         *  in a much higher computational cost.
+         *
+         *  @param mime A type or a file extension. Examples:
+         *              .html -> text/html
+         *              html -> text/html
+         *              png -> image/png
+         *              application/json -> application/json
+         *              json -> application/json
+         *
+         *  @return *this for chaining.
+         */
+        response_handler& type(std::string const& mime);
+
+        /**
          *  Sends the HTTP response. After a call to send, the status and header fields
          *  can no longer be changed as they will be sent with this function.
          *  As this function completes the response, chaining will no longer be possible.
