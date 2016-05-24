@@ -38,7 +38,7 @@ namespace attender
         response_handler& set(std::string const& field, std::string const& value);
 
         /**
-         *  Sets the response code. code must be valid/known.
+         *  Sets the response code.
          *
          *  @param code A response code 1xx, 2xx, 3xx, 4xx or 5xx
          *
@@ -89,6 +89,18 @@ namespace attender
          *  @param body A body to send.
          */
         void send(std::vector <char> const& body);
+
+        /**
+         *  This function will set the status and send the status
+         *  message a string in the body.
+         *  The code must be supported / known to attender.
+         *
+         *  Content-Length will automatically be set, if not previously defined.
+         *  Content-Type will be set to "text" for this overload.
+         *
+         *  @param code A response code 1xx, 2xx, 3xx, 4xx or 5xx
+         */
+        void send_status(int code);
 
         /**
          *  Ends the response process.

@@ -75,6 +75,12 @@ namespace attender
         write(this, std::make_shared <std::vector <char>> (body));
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void response_handler::send_status(int code)
+    {
+        status(code);
+        send(header_.get_message());
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void response_handler::end()
     {
         send_header([this](boost::system::error_code ec){
