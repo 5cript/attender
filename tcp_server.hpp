@@ -43,5 +43,6 @@ namespace attender
         // callbacks
         accept_callback on_accept_;
         error_callback on_error_;
+        missing_handler_callback on_missing_handler_;
     };
 }

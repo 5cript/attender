@@ -85,7 +85,10 @@ namespace attender
     void response_handler::send_status(int code)
     {
         status(code);
-        send(header_.get_message());
+        if (code != 204)
+            send(header_.get_message());
+        else
+            end();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::end()

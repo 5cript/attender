@@ -27,14 +27,19 @@ namespace attender
     class response_handler;
     class response_header;
 
+    // callback for functions with error code
     using custom_callback = std::function <void(boost::system::error_code /* ec */)>;
-
     using read_callback = custom_callback;
     using write_callback = custom_callback;
     using parse_callback = custom_callback;
     using error_callback = custom_callback;
 
+    // request finalizing callback
+    using final_callback = std::function <void(std::shared_ptr <request_handler> request,
+                                               std::shared_ptr <response_handler> response)>;
+    using connected_callback = final_callback;
+    using missing_handler_callback = final_callback;
+
+    // accept callback
     using accept_callback = std::function <bool(boost::asio::ip::tcp::socket const& /* sock */)>;
-    using connected_callback = std::function <void(std::shared_ptr <request_handler> request,
-                                                   std::shared_ptr <response_handler> response)>;
 }

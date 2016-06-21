@@ -63,6 +63,7 @@ namespace attender
 
         do
         {
+            // read header entries
             std::string line;
             if (get_line_from_buffer(line))
             {
@@ -109,7 +110,7 @@ namespace attender
         if (progress_ == internal::parser_progress::protocol_and_version)
         {
             std::string protocol_and_version;
-            if (!get_line_from_buffer(protocol_and_version))
+            if (!get_word_from_buffer(protocol_and_version))
                 return false;
 
             auto slash_pos = protocol_and_version.find('/');
@@ -118,6 +119,17 @@ namespace attender
 
             header_.protocol = protocol_and_version.substr(0, slash_pos);
             header_.version = protocol_and_version.substr(slash_pos + 1, protocol_and_version.size() - slash_pos - 1);
+
+            progress_ = internal::parser_progress::protocol_and_version_phase_2;
+        }
+
+        if (progress_ == internal::parser_progress::protocol_and_version_phase_2)
+        {
+            std::string must_be_empty;
+            if (!get_line_from_buffer(must_be_empty))
+                return false;
+            if (!must_be_empty.empty())
+                throw std::runtime_error("header does contain more characters after protocol version");
 
             progress_ = internal::parser_progress::fields;
         }
@@ -165,11 +177,14 @@ namespace attender
     bool request_parser::get_word_from_buffer(std::string& word)
     {
         auto space = header_buffer_.find(' ');
-        if (space == std::string::npos)
+        auto newLine = header_buffer_.find('\r');
+        if (space == std::string::npos && newLine == std::string::npos)
             return false;
 
-        word = header_buffer_.substr(0, space);
-        header_buffer_ = header_buffer_.substr(space + 1, header_buffer_.size() - space - 1);
+        auto first = std::min(space, newLine); // breaks, when std::size_t is not unsigned, which it should never be.
+
+        word = header_buffer_.substr(0, first);
+        header_buffer_ = header_buffer_.substr(first + 1, header_buffer_.size() - first - 1);
         return true;
     }
 //---------------------------------------------------------------------------------------------------------------------

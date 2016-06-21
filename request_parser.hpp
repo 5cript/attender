@@ -17,6 +17,7 @@ namespace attender
             verb,
             url,
             protocol_and_version,
+            protocol_and_version_phase_2,
             fields,
             body
         };

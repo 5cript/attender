@@ -101,7 +101,12 @@ namespace attender
                             }
                             else
                             {
-                                // TODO: 404
+                                if (on_missing_handler_)
+                                    on_missing_handler_(req, res);
+                                else
+                                {
+                                    res->send_status(404);
+                                }
                             }
                         }
                     );
