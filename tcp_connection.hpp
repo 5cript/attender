@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 #include <boost/iostreams/categories.hpp>
+#include <boost/asio/deadline_timer.hpp>
 
 namespace attender
 {
@@ -95,6 +96,9 @@ namespace attender
 
         /**
          *  Read more bytes into the buffer. This will overwrite the buffer.
+         *
+         *  Do not call this function while another read operation is in progress.
+         *  This will lead into library-undefined behaviour.
          */
         void read();
 
@@ -141,6 +145,17 @@ namespace attender
 
         void attach_lifetime_binder(lifetime_binder* ltb);
 
+        /**
+         *  Checks the deadline_timer and possibly terminates the connection if the timeout was reached.
+         *  Any IO will reset the deadline
+         */
+        void check_deadline(boost::asio::deadline_timer* timer, boost::system::error_code const& ec);
+
+        /**
+         *  Returns wether the socket is open or not.
+         */
+        bool stopped() const;
+
     private:
         tcp_server_interface* parent_;
         asio::ip::tcp::socket socket_;
@@ -148,6 +163,7 @@ namespace attender
         std::vector <char> write_buffer_;
         read_callback read_callback_inst_;
         std::size_t bytes_ready_;
+        boost::asio::deadline_timer read_timeout_timer_;
 
         std::unique_ptr <lifetime_binder> kept_alive_;
     };

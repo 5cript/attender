@@ -28,7 +28,7 @@ namespace attender
         void do_accept();
 
     private:
-        // asio stuff
+        // asio stuff (do not reorder below connection_manager)
         asio::io_service* service_;
         boost::asio::ip::tcp::socket socket_;
         boost::asio::ip::tcp::acceptor acceptor_;
