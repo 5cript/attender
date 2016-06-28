@@ -7,7 +7,6 @@
 
 #include <string>
 #include <iosfwd>
-#include <stdexcept>
 
 namespace attender
 {
@@ -23,14 +22,6 @@ namespace attender
             body
         };
     }
-
-    struct header_limitations_error : std::runtime_error
-    {
-        template <typename T>
-        header_limitations_error(T&& msg)
-            : std::runtime_error(std::forward <T&&> (msg))
-        {}
-    };
 
     class request_parser
     {
@@ -48,7 +39,6 @@ namespace attender
     private:
         bool get_line_from_buffer(std::string& line);
         bool get_word_from_buffer(std::string& word);
-        bool expect_space();
         void add_field(std::string const& line);
         bool parse_words();
 

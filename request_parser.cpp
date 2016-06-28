@@ -3,7 +3,6 @@
 #include "tcp_connection.hpp"
 
 #include <iostream>
-#include <cctype>
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/stream.hpp>
 
@@ -51,7 +50,7 @@ namespace attender
 
         // check max
         if (header_buffer_.size() > config::header_buffer_max)
-            throw header_limitations_error("exceeded maximum of header buffer size");
+            throw std::runtime_error("exceeded maximum of header buffer size");
 
         if (progress_ != internal::parser_progress::fields)
         {
@@ -75,12 +74,9 @@ namespace attender
                     return true;
                 }
 
-                if (!std::isalnum(line.front()))
-                    throw std::runtime_error("header field is not starting with character or number");
-
                 // check max
                 if (field_parse_counter_ + 1u > config::header_field_max)
-                    throw header_limitations_error("exceeded maximum amount of header fields");
+                    throw std::runtime_error("exceeded maximum amount of header fields");
 
                 add_field(line);
             }
@@ -101,10 +97,6 @@ namespace attender
         {
             if (!get_word_from_buffer(header_.method))
                 return false;
-
-            if (!expect_space())
-                return false;
-
             progress_ = internal::parser_progress::url;
         }
 
@@ -112,10 +104,6 @@ namespace attender
         {
             if (!get_word_from_buffer(header_.url))
                 return false;
-
-            if (!expect_space())
-                return false;
-
             progress_ = internal::parser_progress::protocol_and_version;
         }
 
@@ -141,7 +129,7 @@ namespace attender
             if (!get_line_from_buffer(must_be_empty))
                 return false;
             if (!must_be_empty.empty())
-                throw std::runtime_error("header is malformed and contains more tokens than expected");
+                throw std::runtime_error("header does contain more characters after protocol version");
 
             progress_ = internal::parser_progress::fields;
         }
@@ -161,17 +149,6 @@ namespace attender
             boost::algorithm::trim_left_copy(line.substr(colpos + 1, line.size() - colpos - 1));
     }
 //---------------------------------------------------------------------------------------------------------------------
-    bool request_parser::expect_space()
-    {
-        using namespace std::string_literals;
-
-        if (header_buffer_.empty() || header_buffer_.front() != ' ')
-            return false;
-
-        header_buffer_.erase(0, 1);
-        return true;
-    }
-//---------------------------------------------------------------------------------------------------------------------
     bool request_parser::get_line_from_buffer(std::string& line)
     {
         line.reserve(64);
@@ -184,9 +161,8 @@ namespace attender
                 auto seekpos = i + 1;
                 if (seekpos != end && *seekpos == '\n')
                 {
-                    //header_buffer_ = header_buffer_.substr(seekpos - std::cbegin(header_buffer_) + 1,
-                    //                                       std::cend(header_buffer_) - std::cbegin(header_buffer_) - 2);
-                    header_buffer_.erase(0, seekpos - std::cbegin(header_buffer_) + 1);
+                    header_buffer_ = header_buffer_.substr(seekpos - std::cbegin(header_buffer_) + 1,
+                                                           std::cend(header_buffer_) - std::cbegin(header_buffer_) - 2);
 
                     return true;
                 }
@@ -208,8 +184,7 @@ namespace attender
         auto first = std::min(space, newLine); // breaks, when std::size_t is not unsigned, which it should never be.
 
         word = header_buffer_.substr(0, first);
-        //header_buffer_ = header_buffer_.substr(first, header_buffer_.size() - first);
-        header_buffer_.erase(0, first);
+        header_buffer_ = header_buffer_.substr(first + 1, header_buffer_.size() - first - 1);
         return true;
     }
 //---------------------------------------------------------------------------------------------------------------------
