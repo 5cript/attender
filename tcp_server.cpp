@@ -27,19 +27,6 @@ namespace attender
     tcp_server::~tcp_server()
     {
         stop();
-        // This destructor does a lot of work and ist extremely important overall.
-        // The stop action and all ensuing destructors perform a close on all sockets and a cleanup.
-        //
-        // The whole library bases on the assumption (among others) that a
-        // connection will never ever outlive the server instance itself.
-        //
-        // This is a very reasonable assumption as there is no conceptual sense in having dangling connections.
-        // This will ensure to close/abort every remaining connection and stop them from accessing
-        // dangling pointers to the server or connection manager.
-        //
-        // stop() => stops the acceptor.
-        // ~connections_() => deleting the connection manager closes all connections
-        // ~socket_ => closes the server socket. The system can now free the port and handles.
     }
 //---------------------------------------------------------------------------------------------------------------------
     connection_manager* tcp_server::get_connections()

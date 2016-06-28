@@ -1,7 +1,4 @@
 #include "tcp_connection.hpp"
-#include "tcp_server_interface.hpp"
-#include "connection_manager.hpp"
-#include "debug.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -16,12 +13,9 @@ namespace attender
         , write_buffer_{}
         , read_callback_inst_{}
         , bytes_ready_{0}
-        , read_timeout_timer_{socket_.get_io_service()}
         , kept_alive_{nullptr}
     {
-        // this will ensure, that the timer does not fire right away when it it started
-        // the timer is started on read, but the timeout will be set later in every do_read cycle.
-        read_timeout_timer_.expires_at(boost::posix_time::pos_infin);
+
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection::~tcp_connection()
@@ -41,42 +35,27 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::read()
     {
-        read_timeout_timer_.async_wait(
-            [this, self{shared_from_this()}](boost::system::error_code const& ec)
-            {
-                check_deadline(&read_timeout_timer_, ec);
-            }
-        );
-
         do_read();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::stop()
     {
         socket_.close();
-        read_timeout_timer_.cancel();
-
-        // This must be the last action of this function
         kept_alive_.reset(nullptr);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::shutdown()
     {
-        // this must be called before stop.
         boost::system::error_code ignored_ec;
         socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::do_read()
     {
-        // sets / resets the timer.
-        read_timeout_timer_.expires_from_now(boost::posix_time::seconds(config::read_timeout));
-
         socket_.async_read_some(boost::asio::buffer(buffer_),
             [this, self{shared_from_this()}](boost::system::error_code ec, std::size_t bytes_transferred)
             {
                 bytes_ready_ = bytes_transferred;
-                read_timeout_timer_.expires_from_now(boost::posix_time::pos_infin);
                 read_callback_inst_(ec);
             }
         );
@@ -153,44 +132,6 @@ namespace attender
     asio::ip::tcp::socket* tcp_connection::get_socket()
     {
         return &socket_;
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    bool tcp_connection::stopped() const
-    {
-        return !socket_.is_open();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::check_deadline(boost::asio::deadline_timer* timer, boost::system::error_code const& ec)
-    {
-        // The socket is not open anymore, therefore timeout checkings are no longer relevant.
-        if (stopped())
-            return;
-
-        if (ec)
-        {
-            // There has been an error, no matter what, close the connection.
-            DUMP(ec, ATTENDER_CODE_PLACE);
-
-            parent_->get_connections()->remove(shared_from_this());
-            return;
-        }
-
-        // Check whether the deadline has passed. We compare the deadline against
-        // the current time since a new asynchronous operation may have moved the
-        // deadline before this actor had a chance to run.
-        if (timer->expires_at() <= boost::asio::deadline_timer::traits_type::now())
-        {
-            parent_->get_connections()->remove(shared_from_this());
-        }
-        else
-        {
-            timer->async_wait(
-                [this, timer](boost::system::error_code const& ec)
-                {
-                    check_deadline(timer, ec);
-                }
-            );
-        }
     }
 //#####################################################################################################################
     tcp_stream_device::tcp_stream_device(tcp_connection* connection)
