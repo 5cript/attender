@@ -32,11 +32,11 @@ namespace attender
     using read_callback = custom_callback;
     using write_callback = custom_callback;
     using parse_callback = custom_callback;
-    using error_callback = custom_callback;
+    using error_callback = std::function <void(tcp_connection_interface* /*connection*/, boost::system::error_code /*ec*/)>;
 
     // request finalizing callback
-    using final_callback = std::function <void(request_handler* request,
-                                               response_handler* response)>;
+    using final_callback = std::function <void(request_handler* /*request*/,
+                                               response_handler* /*response*/)>;
     using connected_callback = final_callback;
     using missing_handler_callback = final_callback;
 

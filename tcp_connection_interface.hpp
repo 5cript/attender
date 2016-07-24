@@ -33,6 +33,10 @@ namespace attender
         virtual buffer_iterator end() const = 0;
         virtual std::vector <char>& get_read_buffer() = 0;
 
+        // auxiliary info
+        virtual std::string get_remote_address() const = 0;
+        virtual unsigned short get_remote_port() const = 0;
+
         // internal control
         virtual tcp_server_interface* get_parent() = 0;
         virtual void set_read_callback(read_callback const& new_read_callback) = 0;

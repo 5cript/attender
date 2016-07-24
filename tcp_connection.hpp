@@ -5,13 +5,15 @@
 #include "tcp_connection_interface.hpp"
 #include "lifetime_binding.hpp"
 
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/iostreams/categories.hpp>
+
 #include <memory>
 #include <utility>
 #include <functional>
 #include <mutex>
 
 #include <iosfwd>
-#include <boost/iostreams/categories.hpp>
 
 namespace attender
 {
@@ -129,10 +131,33 @@ namespace attender
          */
         asio::ip::tcp::socket* get_socket();
 
+        /**
+         *  Returns the remote host address.
+         *  @return empty string on fail, or address on success.
+         */
+        std::string get_remote_address() const;
+
+        /**
+         *  Returns the remote host port.
+         *  @return 0 on failure, or any other number that is the port (on success).
+         */
+        unsigned short get_remote_port() const;
+
     private:
         void do_read();
 
         void attach_lifetime_binder(lifetime_binding* ltb);
+
+        /**
+        *  Checks the deadline_timer and possibly terminates the connection if the timeout was reached.
+        *  Any IO will reset the deadline
+        */
+        void check_deadline(boost::asio::deadline_timer* timer, boost::system::error_code const& ec);
+
+        /**
+        *  Returns wether the socket is open or not.
+        */
+        bool stopped() const;
 
     private:
         tcp_server_interface* parent_;
@@ -141,6 +166,7 @@ namespace attender
         std::vector <char> write_buffer_;
         read_callback read_callback_inst_;
         std::size_t bytes_ready_;
+        boost::asio::deadline_timer read_timeout_timer_;
 
         std::unique_ptr <lifetime_binding> kept_alive_;
     };

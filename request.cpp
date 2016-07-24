@@ -44,7 +44,10 @@ namespace attender
     void request_handler::header_read_handler(boost::system::error_code ec)
     {
         if (ec)
+        {
             on_parse_(ec);
+            return;
+        }
 
         parser_.feed(connection_);
 

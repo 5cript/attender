@@ -83,12 +83,13 @@ namespace attender
                     static_cast <tcp_connection*> (connection)->attach_lifetime_binder(new lifetime_binding (req, res));
 
                     req->initiate_header_read(
-                        [this, res, req](boost::system::error_code ec)
+                        [this, res, req, connection](boost::system::error_code ec)
                         {
                             // finished header parsing.
                             if (ec)
                             {
-                                on_error_(ec);
+                                on_error_(connection, ec);
+                                connections_.remove(connection);
                                 return;
                             }
 
