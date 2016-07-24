@@ -35,8 +35,8 @@ namespace attender
     using error_callback = custom_callback;
 
     // request finalizing callback
-    using final_callback = std::function <void(std::shared_ptr <request_handler> request,
-                                               std::shared_ptr <response_handler> response)>;
+    using final_callback = std::function <void(request_handler* request,
+                                               response_handler* response)>;
     using connected_callback = final_callback;
     using missing_handler_callback = final_callback;
 

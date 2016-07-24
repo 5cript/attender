@@ -75,13 +75,12 @@ namespace attender
                 {
                     std::cout << "new connection!\n";
 
-                    auto shared_connection = std::make_shared <tcp_connection> (this, std::move(socket_));
-                    connections_.add(shared_connection);
+                    auto* connection = connections_.create <tcp_connection> (this, std::move(this->socket_));
 
-                    auto res = std::make_shared <response_handler> (shared_connection);
-                    auto req = std::make_shared <request_handler> (shared_connection);
+                    auto* res = new response_handler (connection);
+                    auto* req = new request_handler (connection);
 
-                    shared_connection->attach_lifetime_binder(new tcp_connection::lifetime_binder {req, res});
+                    static_cast <tcp_connection*> (connection)->attach_lifetime_binder(new lifetime_binding (req, res));
 
                     req->initiate_header_read(
                         [this, res, req](boost::system::error_code ec)

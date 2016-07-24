@@ -38,7 +38,7 @@ namespace attender
         return progress_ == internal::parser_progress::body;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    bool request_parser::feed(tcp_connection* connection)
+    bool request_parser::feed(tcp_connection_interface* connection)
     {
         if (finished())
             return true;

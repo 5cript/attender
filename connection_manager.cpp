@@ -1,29 +1,31 @@
 #include "connection_manager.hpp"
+#include "tcp_connection.hpp"
 
 namespace attender
 {
 //#####################################################################################################################
-    void connection_manager::add(shared_connection connection)
+    void freeConnection(tcp_connection_interface* connection)
     {
-        std::lock_guard <std::mutex> guard (connectionsLock_);
-
-        connections_.insert(connection);
-        connection->start();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void connection_manager::remove(shared_connection connection)
-    {
-        std::lock_guard <std::mutex> guard (connectionsLock_);
-
-        connections_.erase(connection);
         connection->shutdown();
         connection->stop();
+        delete connection;
+    }
+//#####################################################################################################################
+    void connection_manager::remove(tcp_connection_interface* connection)
+    {
+        {
+            std::lock_guard <std::mutex> guard (connectionsLock_);
+            connections_.erase(connection);
+        }
+        freeConnection(connection);
     }
 //---------------------------------------------------------------------------------------------------------------------
     connection_manager::~connection_manager()
     {
+        std::lock_guard <std::mutex> guard (connectionsLock_);
+
         for (auto& c : connections_)
-            c->stop();
+            freeConnection(c);
         connections_.clear();
     }
 //#####################################################################################################################

@@ -11,10 +11,10 @@
 namespace attender
 {
 //#####################################################################################################################
-    request_handler::request_handler(std::shared_ptr <tcp_connection> connection)
+    request_handler::request_handler(tcp_connection_interface* connection)
         : parser_{}
         , header_{}
-        , connection_{std::move(connection)}
+        , connection_{connection}
         , sink_{nullptr}
         , on_parse_{}
         , params_{}
@@ -46,13 +46,13 @@ namespace attender
         if (ec)
             on_parse_(ec);
 
-        parser_.feed(connection_.get());
+        parser_.feed(connection_);
 
         if (parser_.finished())
         {
             header_ = parser_.get_header();
             on_parse_({});
-            on_parse_ = {}; // frees shared_ptrs;
+            on_parse_ = {}; // frees shared_ptrs; TODO: FIXME?
         }
     }
 //---------------------------------------------------------------------------------------------------------------------

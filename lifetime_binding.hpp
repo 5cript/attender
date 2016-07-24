@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tcp_fwd.hpp"
+
 #include <memory>
 #include <tuple>
 
@@ -8,19 +10,19 @@
 
 namespace attender
 {
-    template <typename... List>
     class lifetime_binding
     {
     public:
-        lifetime_binding(std::shared_ptr <List>... to_keep_alive)
-            : kept_alive{std::move(to_keep_alive)...}
-        {
-        }
+        lifetime_binding(request_handler* req, response_handler* res);
+        ~lifetime_binding();
 
+        lifetime_binding(lifetime_binding const&) = delete;
+        lifetime_binding& operator=(lifetime_binding const&) = delete;
         lifetime_binding& operator=(lifetime_binding&&) = delete;
         lifetime_binding(lifetime_binding&&) = delete;
 
     private:
-        std::tuple <std::shared_ptr <List>...> kept_alive;
+        std::unique_ptr <request_handler> req_;
+        std::unique_ptr <response_handler> res_;
     };
 }

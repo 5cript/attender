@@ -29,7 +29,7 @@ namespace attender
         });
     }
 //#####################################################################################################################
-    response_handler::response_handler(std::shared_ptr <tcp_connection> connection)
+    response_handler::response_handler(tcp_connection_interface* connection)
         : connection_{connection}
         , header_{}
         , headerSent_{false}
@@ -44,7 +44,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection_interface* response_handler::get_connection()
     {
-        return connection_.get();
+        return connection_;
     }
 //---------------------------------------------------------------------------------------------------------------------
     response_handler&  response_handler::append(std::string const& field, std::string const& value)
@@ -94,7 +94,6 @@ namespace attender
     void response_handler::end()
     {
         send_header([this](boost::system::error_code ec){
-            connection_->shutdown();
             connection_->get_parent()->get_connections()->remove(connection_);
             // further use of this is invalid from here.
         });

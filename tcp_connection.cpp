@@ -53,7 +53,7 @@ namespace attender
     void tcp_connection::do_read()
     {
         socket_.async_read_some(boost::asio::buffer(buffer_),
-            [this, self{shared_from_this()}](boost::system::error_code ec, std::size_t bytes_transferred)
+            [this](boost::system::error_code ec, std::size_t bytes_transferred)
             {
                 bytes_ready_ = bytes_transferred;
                 read_callback_inst_(ec);
@@ -69,7 +69,7 @@ namespace attender
         if (stream.gcount() != 0)
         {
             boost::asio::async_write(socket_, boost::asio::buffer(write_buffer_),
-                [this, self{shared_from_this()}, cb{handler}, &stream](boost::system::error_code ec, std::size_t)
+                [this, cb{handler}, &stream](boost::system::error_code ec, std::size_t)
                 {
                     if (!ec)
                     {
@@ -119,9 +119,9 @@ namespace attender
         return bytes_ready_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_connection::attach_lifetime_binder(lifetime_binder* ltb)
+    void tcp_connection::attach_lifetime_binder(lifetime_binding* ltb)
     {
-        kept_alive_ = std::unique_ptr <lifetime_binder> (ltb);
+        kept_alive_ = std::unique_ptr <lifetime_binding> (ltb);
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_server_interface* tcp_connection::get_parent()
@@ -134,7 +134,7 @@ namespace attender
         return &socket_;
     }
 //#####################################################################################################################
-    tcp_stream_device::tcp_stream_device(tcp_connection* connection)
+    tcp_stream_device::tcp_stream_device(tcp_connection_interface* connection)
         : connection_{connection}
         , pos_{0}
     {

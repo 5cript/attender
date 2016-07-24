@@ -10,10 +10,7 @@ namespace attender
     class response_handler
     {
     public:
-        using shared_connection = std::shared_ptr <tcp_connection_interface>;
-
-    public:
-        response_handler(std::shared_ptr <tcp_connection> connection);
+        response_handler(tcp_connection_interface* connection);
         ~response_handler();
 
         /**
@@ -142,7 +139,7 @@ namespace attender
         void try_set(std::string const& field, std::string const& value);
 
     private:
-        shared_connection connection_;
+        tcp_connection_interface* connection_;
         response_header header_;
         std::atomic_bool headerSent_;
     };

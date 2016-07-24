@@ -4,6 +4,7 @@
 #include "request_header.hpp"
 #include "request_parser.hpp"
 #include "callback_wrapper.hpp"
+#include "tcp_connection_interface.hpp"
 
 #include <iosfwd>
 #include <boost/thread/future.hpp>
@@ -17,7 +18,7 @@ namespace attender
         friend tcp_server;
 
     public:
-        request_handler(std::shared_ptr <tcp_connection> connection);
+        request_handler(tcp_connection_interface* connection);
         ~request_handler();
 
         /**
@@ -121,7 +122,7 @@ namespace attender
     private:
         request_parser parser_;
         request_header header_;
-        std::shared_ptr <tcp_connection> connection_;
+        tcp_connection_interface* connection_;
         std::shared_ptr <tcp_read_sink> sink_;
         parse_callback on_parse_;
         std::unordered_map <std::string, std::string> params_;

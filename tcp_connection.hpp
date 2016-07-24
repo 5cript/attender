@@ -15,15 +15,10 @@
 
 namespace attender
 {
-    class tcp_connection : public std::enable_shared_from_this <tcp_connection>
-                         , public tcp_connection_interface
+    class tcp_connection : public tcp_connection_interface
     {
         friend tcp_server;
         friend tcp_stream_device;
-
-    public:
-        using buffer_iterator = std::vector <char>::const_iterator;
-        using lifetime_binder = lifetime_binding <request_handler, response_handler>;
 
     public:
         explicit tcp_connection(tcp_server_interface* parent, boost::asio::ip::tcp::socket socket);
@@ -57,10 +52,8 @@ namespace attender
             write_buffer_.resize(end - begin);
             std::copy(begin, end, write_buffer_.begin());
 
-            auto self{shared_from_this()};
-
             boost::asio::async_write(socket_, boost::asio::buffer(write_buffer_),
-                [this, self, handler](boost::system::error_code ec, std::size_t)
+                [this, handler](boost::system::error_code ec, std::size_t)
                 {
                     handler(ec);
                 }
@@ -139,7 +132,7 @@ namespace attender
     private:
         void do_read();
 
-        void attach_lifetime_binder(lifetime_binder* ltb);
+        void attach_lifetime_binder(lifetime_binding* ltb);
 
     private:
         tcp_server_interface* parent_;
@@ -149,7 +142,7 @@ namespace attender
         read_callback read_callback_inst_;
         std::size_t bytes_ready_;
 
-        std::unique_ptr <lifetime_binder> kept_alive_;
+        std::unique_ptr <lifetime_binding> kept_alive_;
     };
 
     class tcp_stream_device
@@ -158,12 +151,12 @@ namespace attender
         using char_type = char;
         using category = boost::iostreams::source_tag;
 
-        tcp_stream_device(tcp_connection* connection);
+        tcp_stream_device(tcp_connection_interface* connection);
 
         std::streamsize read(char_type* s, std::streamsize n);
 
     private:
-        tcp_connection* connection_;
+        tcp_connection_interface* connection_;
         std::size_t pos_;
     };
 }

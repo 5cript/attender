@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tcp_fwd.hpp"
+#include "tcp_connection_interface.hpp"
 #include "request_header.hpp"
 
 #include <boost/optional.hpp>
@@ -38,7 +39,7 @@ namespace attender
         request_parser();
 
         // returns true if parser finished parsing the header
-        bool feed(tcp_connection* connection);
+        bool feed(tcp_connection_interface* connection);
 
         request_header get_header() const;
         bool finished() const;
