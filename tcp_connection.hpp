@@ -30,18 +30,18 @@ namespace attender
         /**
          *  Starts asynchronous reading.
          */
-        void start();
+        void start() override;
 
         /**
          *  Closes the socket and aborts all messaging
          *  Also removes the livetime bindings
          */
-        void stop();
+        void stop() override;
 
         /**
          *  Gracefully shuts the socket down.
          */
-        void shutdown();
+        void shutdown() override;
 
         /**
          *  This function writes all the bytes from begin to end onto the stream.
@@ -86,39 +86,39 @@ namespace attender
         /**
          *  Sets the read callback, which is called when a read operation finishes.
          */
-        void set_read_callback(read_callback const& new_read_callback);
+        void set_read_callback(read_callback const& new_read_callback) override;
 
         /**
          *  Read more bytes into the buffer. This will overwrite the buffer.
          */
-        void read();
+        void read() override;
 
         /**
          *  Returns the amount of bytes that remain in the read buffer.
          *
          *  @return A number of bytes that can be taken from the buffer.
          */
-        std::size_t ready_count() const;
+        std::size_t ready_count() const override;
 
         /**
          *  Returns the beginning of the read buffer.
          *
          *  @return An iterator to the read buffer.
          */
-        buffer_iterator begin() const;
+        buffer_iterator begin() const override;
 
         /**
          *  Returns the end of the read buffer.
          *
          *  @return An iterator to the read buffer.
          */
-        buffer_iterator end() const;
+        buffer_iterator end() const override;
 
         /**
          *  Returns the read buffer.
          *  Used in request_handler class.
          */
-        std::vector <char>& get_read_buffer();
+        std::vector <char>& get_read_buffer() override;
 
         /**
          *  Returns the tcp server behind this tcp connection.
@@ -129,19 +129,19 @@ namespace attender
         /**
          *  Return the associated socket.
          */
-        asio::ip::tcp::socket* get_socket();
+        asio::ip::tcp::socket* get_socket() override;
 
         /**
          *  Returns the remote host address.
          *  @return empty string on fail, or address on success.
          */
-        std::string get_remote_address() const;
+        std::string get_remote_address() const override;
 
         /**
          *  Returns the remote host port.
          *  @return 0 on failure, or any other number that is the port (on success).
          */
-        unsigned short get_remote_port() const;
+        unsigned short get_remote_port() const override;
 
     private:
         void do_read();
