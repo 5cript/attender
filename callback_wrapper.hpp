@@ -21,7 +21,7 @@ namespace attender
         callback_wrapper& then(FunctionT const& f)
         {
             if (fullfilled_.load())
-                func_();
+                f();
             else
                 func_ = f;
 
@@ -35,7 +35,7 @@ namespace attender
         callback_wrapper& then(FunctionT&& f)
         {
             if (fullfilled_.load())
-                func_();
+                f();
             else
                 func_ = std::move(f);
 
@@ -49,7 +49,7 @@ namespace attender
         callback_wrapper& except(FunctionT const& f)
         {
             if (error_.load())
-                fail_(last_ec_.load());
+                f(last_ec_.load());
             else
                 fail_ = f;
 
@@ -63,7 +63,7 @@ namespace attender
         callback_wrapper& except(FunctionT&& f)
         {
             if (error_.load())
-                fail_(last_ec_.load());
+                f(last_ec_.load());
             else
                 fail_ = std::move(f);
 
