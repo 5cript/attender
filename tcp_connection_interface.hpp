@@ -10,8 +10,9 @@
 
 namespace attender
 {
-    struct tcp_connection_interface
+    class tcp_connection_interface
     {
+    public:
         using buffer_iterator = std::vector <char>::const_iterator;
 
         // control

@@ -7,8 +7,9 @@
 
 namespace attender
 {
-    struct tcp_server_interface
+    class tcp_server_interface
     {
+    public:
         virtual ~tcp_server_interface() = default;
 
         virtual void start(std::string const& port, std::string const& host) = 0;
