@@ -11,6 +11,8 @@ namespace attender
         callback_wrapper()
             : func_{}
             , fail_{}
+            , fullfilled_{false}
+            , error_{false}
         {
         }
 
