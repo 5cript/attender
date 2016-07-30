@@ -45,5 +45,8 @@ namespace attender
 
         // interface virtual destructor
         virtual ~tcp_connection_interface() = default;
+
+        virtual response_handler& get_response_handler() = 0;
+        virtual request_handler& get_request_handler() = 0;
     };
 }

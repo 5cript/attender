@@ -12,6 +12,7 @@
 #include <utility>
 #include <functional>
 #include <mutex>
+#include <atomic>
 
 #include <iosfwd>
 
@@ -154,6 +155,9 @@ namespace attender
         */
         void check_deadline(boost::asio::deadline_timer* timer, boost::system::error_code const& ec);
 
+        response_handler& get_response_handler() override;
+        request_handler& get_request_handler() override;
+
         /**
         *  Returns wether the socket is open or not.
         */
@@ -167,6 +171,7 @@ namespace attender
         read_callback read_callback_inst_;
         std::size_t bytes_ready_;
         boost::asio::deadline_timer read_timeout_timer_;
+        std::atomic_bool closed_;
 
         std::unique_ptr <lifetime_binding> kept_alive_;
     };

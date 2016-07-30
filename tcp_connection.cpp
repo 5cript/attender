@@ -15,6 +15,7 @@ namespace attender
         , read_callback_inst_{}
         , bytes_ready_{0}
         , read_timeout_timer_{socket_.get_io_service()}
+        , closed_{false}
         , kept_alive_{nullptr}
     {
         // this will ensure, that the timer does not fire right away when it it started
@@ -24,8 +25,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection::~tcp_connection()
     {
-        if (!stopped())
-            stop();
+        stop();
         std::cout << "connection died\n";
 
         // This must be the last action of this function
@@ -57,6 +57,11 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_connection::stop()
     {
+        if (closed_.load())
+            return;
+        closed_.store(true);
+
+        shutdown();
         socket_.close();
         read_timeout_timer_.cancel();
     }
@@ -197,7 +202,6 @@ namespace attender
             // There has been an error, no matter what, close the connection.
             DUMP(ec, ATTENDER_CODE_PLACE);
 
-            shutdown();
             stop();
             return;
         }
@@ -207,7 +211,6 @@ namespace attender
         // deadline before this actor had a chance to run.
         if (timer->expires_at() <= boost::asio::deadline_timer::traits_type::now())
         {
-            shutdown();
             stop();
         }
         else
@@ -219,6 +222,16 @@ namespace attender
                 }
             );
         }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    response_handler& tcp_connection::get_response_handler()
+    {
+        return kept_alive_->get_response_handler();
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    request_handler& tcp_connection::get_request_handler()
+    {
+        return kept_alive_->get_request_handler();
     }
 //#####################################################################################################################
     tcp_stream_device::tcp_stream_device(tcp_connection_interface* connection)
