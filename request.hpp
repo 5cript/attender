@@ -28,6 +28,9 @@ namespace attender
          */
         request_header get_header() const;
 
+        /**
+         *
+         */
         callback_wrapper& read_body(std::ostream& stream);
 
         /**

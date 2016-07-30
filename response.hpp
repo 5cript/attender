@@ -114,6 +114,10 @@ namespace attender
          *  Use to quickly end the response without any data. If you need to respond with data,
          *  instead use methods such as send and json.
          *  As this function completes the response, chaining will no longer be possible.
+         *
+         *  Do not call this function or any for that matter, after an exception was thrown or
+         *  the request got finalized by a previous end call. The call to end invalidates all
+         *  functions on request_handler, response_handler and the tcp_connection itself.
          */
         void end();
 

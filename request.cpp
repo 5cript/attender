@@ -4,6 +4,8 @@
 #include "tcp_read_sink.hpp"
 #include "tcp_server_interface.hpp"
 
+#include "response.hpp"
+
 #include <string>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
@@ -80,14 +82,16 @@ namespace attender
         if (ec)
         {
             on_finished_read_.error(ec);
+            connection_->get_response_handler().end();
             return;
         }
 
-        sink_->write(connection_->get_read_buffer());
+        auto expected = get_content_length() - sink_->get_bytes_written();
+        sink_->write(connection_->get_read_buffer(), expected);
 
-        auto remaining = get_content_length() - sink_->get_bytes_written();
+        auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_bytes_written()), 0ll);
 
-        if (remaining == 0)
+        if (remaining == 0ll)
             on_finished_read_.fullfill();
         else
             connection_->read();
@@ -107,8 +111,8 @@ namespace attender
         auto body_begin = parser_.get_buffer(); // start of body
         sink_->write(body_begin.c_str(), body_begin.size());
 
-        std::cout << get_content_length() << "\n";
-        std::cout << body_begin.size() << "\n";
+        //std::cout << get_content_length() << "\n";
+        //std::cout << body_begin.size() << "\n";
 
         // read more if more data is to be expected.
         if (get_content_length() - body_begin.size() > 0)
