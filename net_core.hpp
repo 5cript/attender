@@ -19,7 +19,7 @@
 #endif // CONFIG_RECEIVE_BUFFER_SIZE
 
 #ifndef CONFIG_READ_TIMEOUT
-#   define CONFIG_READ_TIMEOUT 5
+#   define CONFIG_READ_TIMEOUT 11
 #endif // CONFIG_READ_TIMEOUT
 
 namespace attender
