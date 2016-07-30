@@ -5,6 +5,11 @@
 namespace attender
 {
 //#####################################################################################################################
+    tcp_read_sink::tcp_read_sink()
+        : written_bytes_{0}
+    {
+    }
+//---------------------------------------------------------------------------------------------------------------------
     uint64_t tcp_read_sink::get_bytes_written() const
     {
         return written_bytes_;
@@ -21,9 +26,9 @@ namespace attender
         sink_->write(data, size);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_stream_sink::write(std::vector <char> const& buffer)
+    void tcp_stream_sink::write(std::vector <char> const& buffer, std::size_t amount)
     {
-        write(buffer.data(), buffer.size());
+        write(buffer.data(), std::min(buffer.size(), amount));
     }
 //#####################################################################################################################
     tcp_string_sink::tcp_string_sink(std::string* sink)
@@ -34,12 +39,12 @@ namespace attender
     void tcp_string_sink::write(const char* data, std::size_t size)
     {
         written_bytes_ += size;
-        *sink_ += std::string{data, size};
+        sink_->append(data, size);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_string_sink::write(std::vector <char> const& buffer)
+    void tcp_string_sink::write(std::vector <char> const& buffer, std::size_t amount)
     {
-        write(buffer.data(), buffer.size());
+        write(buffer.data(), std::min(buffer.size(), amount));
     }
 //#####################################################################################################################
 }
