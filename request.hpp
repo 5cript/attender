@@ -29,9 +29,21 @@ namespace attender
         request_header get_header() const;
 
         /**
+         *  Reads tcp-strema contents to the provided sink (in this case an ostream).
+         *  This stream must be kept alive until the read operation finishes and fullfill
+         *  or except is called.
          *
+         *  @warning Do not start multiple read operations at the same time! This will crash you!
+         *
+         *  @param stream A stream to write to. This stream must survive until fullfill or except.
+         *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
          */
-        callback_wrapper& read_body(std::ostream& stream);
+        callback_wrapper& read_body(std::ostream& stream, uint64_t max = 0);
+
+        /**
+         *  Returns the amount of total bytes read in the last read call that was issued.
+         */
+        uint64_t get_read_amount() const;
 
         /**
          *  Contains the hostname derived from the Host HTTP header.
@@ -116,6 +128,7 @@ namespace attender
     private:
         // internals
         uint64_t get_content_length() const;
+        void inizialize_read(uint64_t& max);
 
     private:
         // befriended
@@ -130,6 +143,7 @@ namespace attender
         parse_callback on_parse_;
         std::unordered_map <std::string, std::string> params_;
         callback_wrapper on_finished_read_;
+        uint64_t max_read_;
     };
 //#####################################################################################################################
 }

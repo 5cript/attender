@@ -8,6 +8,7 @@
 
 #include <string>
 #include <iostream>
+#include <limits>
 #include <boost/lexical_cast.hpp>
 
 namespace attender
@@ -21,6 +22,7 @@ namespace attender
         , on_parse_{}
         , params_{}
         , on_finished_read_{}
+        , max_read_{std::numeric_limits <decltype(request_handler::max_read_)>::max()}
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -53,6 +55,7 @@ namespace attender
 
         parser_.feed(connection_);
 
+        // header finished
         if (parser_.finished())
         {
             header_ = parser_.get_header();
@@ -86,10 +89,24 @@ namespace attender
             return;
         }
 
-        auto expected = get_content_length() - sink_->get_bytes_written();
-        sink_->write(connection_->get_read_buffer(), expected);
+        // expected = ContentLength - Amount Read Overall
+        auto expected = get_content_length() - sink_->get_total_bytes_written();
 
-        auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_bytes_written()), 0ll);
+        // remaining limit = Min(Amount Read Overall, Maximum Read Allowed)
+        uint64_t remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), 0ll);
+
+        // limit reached?
+        if (remaining_limit == 0ll)
+        {
+            on_finished_read_.fullfill();
+            return;
+        }
+
+        // write into the sink
+        sink_->write(connection_->get_read_buffer(), std::min(expected, remaining_limit));
+
+        // remaining = ContentLength - Amount Read Overall  (after read)
+        auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), 0ll);
 
         if (remaining == 0ll)
             on_finished_read_.fullfill();
@@ -97,28 +114,59 @@ namespace attender
             connection_->read();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    callback_wrapper& request_handler::read_body(std::ostream& stream)
+    void request_handler::inizialize_read(uint64_t& max)
     {
+        if (max == 0)
+            max = std::numeric_limits <std::decay_t<decltype(max)>>::max();
+
         // rearrange the callback for body reading.
         connection_->set_read_callback([this](boost::system::error_code ec) {
             body_read_handler(ec);
         });
 
+        max_read_ = max;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    uint64_t request_handler::get_read_amount() const
+    {
+        return sink_->get_total_bytes_written();
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    callback_wrapper& request_handler::read_body(std::ostream& stream, uint64_t max)
+    {
+        // set handler and set reader maximum
+        inizialize_read(max);
+
         // assign a sink, which prevails the asynchronous structure.
         sink_.reset(new tcp_stream_sink(&stream));
 
         // write what we already have read by parsing the header
-        auto body_begin = parser_.get_buffer(); // start of body
-        sink_->write(body_begin.c_str(), body_begin.size());
+        if (!parser_.is_buffer_empty())
+        {
+            auto from_header_buffer = std::min(max, parser_.get_buffer().length());
+
+            auto&& body_begin = parser_.read_front(from_header_buffer); // start of body
+            sink_->write(body_begin.c_str(), from_header_buffer);
+
+            // if header buffer exhausted & more content & max not reached.
+            // = read more if more data is to be expected.
+            if (parser_.is_buffer_empty() && get_content_length() - from_header_buffer > 0 && from_header_buffer != max)
+                connection_->read();
+            else
+                on_finished_read_.fullfill();
+        }
+        else
+        {
+            // do not start a read operation, if the whole content has been read.
+            auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), 0ll);
+            if (remaining == 0ll)
+                on_finished_read_.fullfill();
+            else
+                connection_->read();
+        }
 
         //std::cout << get_content_length() << "\n";
         //std::cout << body_begin.size() << "\n";
-
-        // read more if more data is to be expected.
-        if (get_content_length() - body_begin.size() > 0)
-            connection_->read();
-        else
-            on_finished_read_.fullfill();
 
         return on_finished_read_;
     }

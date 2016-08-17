@@ -213,9 +213,22 @@ namespace attender
         return true;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string request_parser::get_buffer() const
+    std::string& request_parser::get_buffer()
     {
         return header_buffer_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_parser::read_front(std::size_t length)
+    {
+        auto amount = std::min(length, header_buffer_.length());
+        auto word = header_buffer_.substr(0, amount);
+        header_buffer_.erase(0, amount);
+        return word;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    bool request_parser::is_buffer_empty() const
+    {
+        return header_buffer_.empty();
     }
 //#####################################################################################################################
 }

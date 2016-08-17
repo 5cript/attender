@@ -38,12 +38,45 @@ namespace attender
     public:
         request_parser();
 
-        // returns true if parser finished parsing the header
+        /**
+         *  @return Returns true if the parser finished parsing the header.
+         */
         bool feed(tcp_connection_interface* connection);
 
+        /**
+         *  @return Returns the parsed header.
+         */
         request_header get_header() const;
+
+        /**
+         *  @return Returns true, if the header end was consumed by the parser.
+         */
         bool finished() const;
-        std::string get_buffer() const;
+
+        /**
+         *  Returns the header buffer. The parser will consume from the front and upon
+         *  finishing, this buffer will contain the rest that potentially contains the body.
+         */
+        std::string& get_buffer();
+
+        /**
+         *  Returns the first 'length' bytes from the header buffer and remote this from the buffer.
+         *
+         *  @param length The amount of bytes to read and remove.
+         *  @return Returns the read string. Warning: this might be smaller than 'length'.
+         */
+        std::string read_front(std::size_t length);
+
+        /**
+         *  @return get_buffer().empty();
+         */
+        bool is_buffer_empty() const;
+
+        /**
+         *  @param key A header entry key, such as "Content-Length"
+         *
+         *  @return Returns the value associated with the key.
+         */
         boost::optional <std::string> get_field(std::string const& key) const;
 
     private:
