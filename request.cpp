@@ -114,7 +114,7 @@ namespace attender
             connection_->read();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void request_handler::inizialize_read(uint64_t& max)
+    void request_handler::initialize_read(uint64_t& max)
     {
         if (max == 0)
             max = std::numeric_limits <std::decay_t<decltype(max)>>::max();
@@ -135,11 +135,27 @@ namespace attender
     callback_wrapper& request_handler::read_body(std::ostream& stream, uint64_t max)
     {
         // set handler and set reader maximum
-        inizialize_read(max);
+        initialize_read(max);
 
         // assign a sink, which prevails the asynchronous structure.
         sink_.reset(new tcp_stream_sink(&stream));
 
+        return body_read_start(max);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    callback_wrapper& request_handler::read_body(std::string& str, uint64_t max)
+    {
+        // set handler and set reader maximum
+        initialize_read(max);
+
+        // assign a sink, which prevails the asynchronous structure.
+        sink_.reset(new tcp_string_sink(&str));
+
+        return body_read_start(max);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    callback_wrapper& request_handler::body_read_start(uint64_t max)
+    {
         // write what we already have read by parsing the header
         if (!parser_.is_buffer_empty())
         {

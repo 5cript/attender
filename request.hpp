@@ -29,7 +29,7 @@ namespace attender
         request_header get_header() const;
 
         /**
-         *  Reads tcp-strema contents to the provided sink (in this case an ostream).
+         *  Reads tcp-stream contents to the provided sink (in this case an ostream).
          *  This stream must be kept alive until the read operation finishes and fullfill
          *  or except is called.
          *
@@ -39,6 +39,18 @@ namespace attender
          *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
          */
         callback_wrapper& read_body(std::ostream& stream, uint64_t max = 0);
+
+        /**
+         *  Reads tcp-stream contents to the provided sink (in this case a string).
+         *  This stream must be kept alive until the read operation finishes and fullfill
+         *  or except is called.
+         *
+         *  @warning Do not start multiple read operations at the same time! This will crash you!
+         *
+         *  @param str A string to write to. This stream must survive until fullfill or except.
+         *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
+         */
+        callback_wrapper& read_body(std::string& str, uint64_t max = 0);
 
         /**
          *  Returns the amount of total bytes read in the last read call that was issued.
@@ -128,7 +140,8 @@ namespace attender
     private:
         // internals
         uint64_t get_content_length() const;
-        void inizialize_read(uint64_t& max);
+        void initialize_read(uint64_t& max);
+        callback_wrapper& body_read_start(uint64_t max);
 
     private:
         // befriended
