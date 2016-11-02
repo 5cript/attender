@@ -29,7 +29,7 @@ namespace attender
         });
     }
 //#####################################################################################################################
-    response_handler::response_handler(tcp_connection_interface* connection)
+    response_handler::response_handler(tcp_connection_interface* connection) noexcept
         : connection_{connection}
         , header_{}
         , headerSent_{false}

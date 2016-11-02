@@ -15,10 +15,12 @@ namespace attender
 //#####################################################################################################################
     class request_handler
     {
+        friend tcp_basic_server;
         friend tcp_server;
+        friend tcp_secure_server;
 
     public:
-        request_handler(tcp_connection_interface* connection);
+        request_handler(tcp_connection_interface* connection) noexcept;
         ~request_handler();
 
         /**

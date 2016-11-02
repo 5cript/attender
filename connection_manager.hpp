@@ -2,6 +2,7 @@
 
 #include "net_core.hpp"
 #include "tcp_connection_interface.hpp"
+#include "tcp_server_interface.hpp"
 
 #include <boost/asio.hpp>
 #include <unordered_set>
@@ -14,8 +15,19 @@ namespace attender
     public:
         ~connection_manager();
 
-        template <typename T>
-        tcp_connection_interface* create(tcp_server* server, boost::asio::ip::tcp::socket&& socket)
+        template <typename T, typename SocketT>
+        tcp_connection_interface* create(tcp_server_interface* server, SocketT* socket)
+        {
+            std::lock_guard <std::mutex> guard (connectionsLock_);
+
+            auto c = connections_.insert(new T{server, socket});
+            auto* connection = *c.first;
+            connection->start();
+            return connection;
+        }
+
+        template <typename T, typename SocketT>
+        tcp_connection_interface* create(tcp_server_interface* server, SocketT&& socket)
         {
             std::lock_guard <std::mutex> guard (connectionsLock_);
 

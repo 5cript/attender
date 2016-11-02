@@ -1,6 +1,6 @@
 #include "tcp_server.hpp"
-
 #include "tcp_connection.hpp"
+
 #include "request.hpp"
 #include "response.hpp"
 
@@ -12,55 +12,10 @@ namespace attender
     tcp_server::tcp_server(asio::io_service* service,
                            error_callback on_error,
                            settings setting)
-        : service_{service}
+        : tcp_basic_server(service, std::move(on_error), std::move(setting))
         , socket_{*service}
-        , acceptor_{*service}
-        , local_endpoint_{}
-        , connections_{}
-        , router_{}
-        , settings_{std::move(setting)}
         , on_accept_{[](boost::asio::ip::tcp::socket const&){return true;}}
-        , on_error_{std::move(on_error)}
     {
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    tcp_server::~tcp_server()
-    {
-        stop();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    connection_manager* tcp_server::get_connections()
-    {
-        return &connections_;
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void tcp_server::start(std::string const& port, std::string const& host)
-    {
-        stop();
-
-        boost::asio::ip::tcp::resolver resolver{*service_};
-        local_endpoint_ = *resolver.resolve({host, port});
-        acceptor_.open(local_endpoint_.protocol());
-        acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-        acceptor_.bind(local_endpoint_);
-        acceptor_.listen();
-
-        do_accept();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void tcp_server::stop()
-    {
-        acceptor_.close();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    settings tcp_server::get_settings() const
-    {
-        return settings_;
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void tcp_server::get(std::string path_template, connected_callback const& on_connect)
-    {
-        router_.add_route("GET", path_template, on_connect);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_server::do_accept()
@@ -77,8 +32,8 @@ namespace attender
 
                     auto* connection = connections_.create <tcp_connection> (this, std::move(this->socket_));
 
-                    auto* res = new response_handler (connection);
-                    auto* req = new request_handler (connection);
+                    auto* res = new response_handler (connection); // noexcept
+                    auto* req = new request_handler (connection); // noexcept
 
                     static_cast <tcp_connection*> (connection)->attach_lifetime_binder(new lifetime_binding (req, res));
 

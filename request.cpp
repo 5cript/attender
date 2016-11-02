@@ -14,7 +14,7 @@
 namespace attender
 {
 //#####################################################################################################################
-    request_handler::request_handler(tcp_connection_interface* connection)
+    request_handler::request_handler(tcp_connection_interface* connection) noexcept
         : parser_{}
         , header_{}
         , connection_{connection}

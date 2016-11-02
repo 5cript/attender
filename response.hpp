@@ -10,7 +10,7 @@ namespace attender
     class response_handler
     {
     public:
-        response_handler(tcp_connection_interface* connection);
+        response_handler(tcp_connection_interface* connection) noexcept;
         ~response_handler();
 
         /**

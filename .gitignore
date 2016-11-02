@@ -5,3 +5,5 @@ main.cpp
 *.depend
 *build_log.html
 *.layout
+key.pem
+cert.pem

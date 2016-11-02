@@ -13,6 +13,10 @@ namespace attender
 
     class tcp_server_interface;
     class tcp_server;
+    class tcp_basic_server;
+    class tcp_secure_server;
+
+    class ssl_context_interface;
 
     class tcp_stream_device;
     class tcp_read_sink;
@@ -41,5 +45,6 @@ namespace attender
     using missing_handler_callback = final_callback;
 
     // accept callback
-    using accept_callback = std::function <bool(boost::asio::ip::tcp::socket const& /* sock */)>;
+    template <typename SocketT>
+    using accept_callback = std::function <bool(SocketT const& /* sock */)>;
 }

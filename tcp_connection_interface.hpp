@@ -41,7 +41,7 @@ namespace attender
         // internal control
         virtual tcp_server_interface* get_parent() = 0;
         virtual void set_read_callback(read_callback const& new_read_callback) = 0;
-        virtual boost::asio::ip::tcp::socket* get_socket() = 0;
+        virtual boost::asio::ip::tcp::socket::lowest_layer_type* get_socket() = 0;
 
         // interface virtual destructor
         virtual ~tcp_connection_interface() = default;
