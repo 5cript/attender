@@ -31,15 +31,16 @@ namespace attender
 
                 if (!ec && on_accept_(*socket_))
                 {
-                    socket_->async_handshake(
+                    auto* connection = connections_.create <tcp_secure_connection> (this, socket_.release());
+
+                    static_cast <tcp_secure_connection*> (connection)->get_secure_socket()->async_handshake(
                         boost::asio::ssl::stream_base::server,
-                        [&, this](boost::system::error_code const& ec)
+                        [&, connection, this](boost::system::error_code const& ec)
                         {
                             // handshake done
                             if (!ec)
                             {
                                 // handshake completed successfully
-                                auto* connection = connections_.create <tcp_secure_connection> (this, socket_.release());
 
                                 auto* res = new response_handler (connection); // noexcept
                                 auto* req = new request_handler (connection); // noexcept
@@ -49,15 +50,21 @@ namespace attender
                                 req->initiate_header_read(
                                     [this, res, req, connection](boost::system::error_code ec)
                                     {
-                                        // finished header parsing.
+                                        // socket closed
+                                        if (ec.value() == 2)
+                                        {
+                                            return;
+                                        }
+
+                                        // some other error
                                         if (ec)
                                         {
-                                            std::cout << "initiate read\n";
                                             on_error_(connection, ec);
                                             connections_.remove(connection);
                                             return;
                                         }
 
+                                        // finished header parsing.
                                         auto maybeRoute = router_.find_route(req->get_header());
                                         if (maybeRoute)
                                         {
@@ -78,15 +85,14 @@ namespace attender
                             }
                             else
                             {
-                                std::cout << "nullptr\n";
-                                on_error_(nullptr, ec);
+                                // TODO...
                             }
                         }
                     ); // async handshake
                 }
                 else
                 {
-                    // TODO ...
+                    // TODO...
                 }
 
                 do_accept();

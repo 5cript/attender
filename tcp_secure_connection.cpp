@@ -14,5 +14,10 @@ namespace attender
         boost::system::error_code ignored_ec;
         socket_->shutdown(ignored_ec);
     }
+//---------------------------------------------------------------------------------------------------------------------
+    tcp_secure_connection::ssl_socket_type* tcp_secure_connection::get_secure_socket()
+    {
+        return &*socket_;
+    }
 //#####################################################################################################################
 }

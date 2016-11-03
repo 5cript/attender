@@ -58,8 +58,15 @@ namespace attender
         // header finished
         if (parser_.finished())
         {
-            header_ = parser_.get_header();
-            on_parse_({});
+            try
+            {
+                header_ = parser_.get_header();
+                on_parse_({});
+            }
+            catch (std::exception const& exc)
+            {
+                on_parse_(boost::system::errc::make_error_code(boost::system::errc::invalid_argument));
+            }
             on_parse_ = {}; // frees shared_ptrs; TODO: FIXME?
         }
     }

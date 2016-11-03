@@ -37,6 +37,8 @@ namespace attender
             return connection;
         }
 
+        void clear();
+
         void remove(tcp_connection_interface* connection);
 
     private:

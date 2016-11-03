@@ -28,8 +28,6 @@ namespace attender
 
                 if (!ec && on_accept_(socket_))
                 {
-                    std::cout << "new connection!\n";
-
                     auto* connection = connections_.create <tcp_connection> (this, std::move(this->socket_));
 
                     auto* res = new response_handler (connection); // noexcept
@@ -40,7 +38,12 @@ namespace attender
                     req->initiate_header_read(
                         [this, res, req, connection](boost::system::error_code ec)
                         {
-                            // finished header parsing.
+                            // socket closed
+                            if (ec.value() == 2)
+                            {
+                                return;
+                            }
+
                             if (ec)
                             {
                                 on_error_(connection, ec);
@@ -48,6 +51,7 @@ namespace attender
                                 return;
                             }
 
+                            // finished header parsing.
                             auto maybeRoute = router_.find_route(req->get_header());
                             if (maybeRoute)
                             {

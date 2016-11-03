@@ -4,7 +4,7 @@
 namespace attender
 {
 //#####################################################################################################################
-    void freeConnection(tcp_connection_interface* connection)
+    void free_connection(tcp_connection_interface* connection)
     {
         connection->shutdown();
         connection->stop();
@@ -17,16 +17,21 @@ namespace attender
             std::lock_guard <std::mutex> guard (connectionsLock_);
             connections_.erase(connection);
         }
-        freeConnection(connection);
+        free_connection(connection);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    connection_manager::~connection_manager()
+    void connection_manager::clear()
     {
         std::lock_guard <std::mutex> guard (connectionsLock_);
 
         for (auto& c : connections_)
-            freeConnection(c);
+            free_connection(c);
         connections_.clear();
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    connection_manager::~connection_manager()
+    {
+        clear();
     }
 //#####################################################################################################################
 }

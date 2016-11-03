@@ -24,6 +24,8 @@ namespace attender
 
         void shutdown() override;
 
+        ssl_socket_type* get_secure_socket();
+
     private:
 
     };
