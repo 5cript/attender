@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cookie.hpp"
+
 #include <boost/optional.hpp>
 
 #include <string>
@@ -26,6 +28,7 @@ namespace attender
         void set_message(std::string const& message);
         void set_field(std::string const& field, std::string const& value);
         void append_field(std::string const& field, std::string const& value);
+        void set_cookie(cookie const& cookie);
 
         std::string get_protocol() const;
         std::string get_version() const;
@@ -42,5 +45,6 @@ namespace attender
         int code_; // example: 200
         std::string message_; // example: OK
         std::unordered_map <std::string, std::string> fields_; // example: Content-Length: 138
+        std::vector <cookie> cookies_;
     };
 }

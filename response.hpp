@@ -2,6 +2,7 @@
 
 #include "tcp_fwd.hpp"
 #include "response_header.hpp"
+#include "cookie.hpp"
 
 #include <atomic>
 
@@ -132,6 +133,11 @@ namespace attender
          *  Will send the header and set the "headerSent_" flag.
          */
         void send_header(write_callback continuation);
+
+        /**
+         *  Will set a cookie.
+         **/
+        void set_cookie(cookie ck);
 
         // TODO:
         // cookie, attachement, download, format(does not belong here), json, xml

@@ -1,105 +1,117 @@
-#include "response_header.hpp"
-#include "response_code.hpp"
+#include "cookie.hpp"
 
 #include <sstream>
 
 namespace attender
 {
 //#####################################################################################################################
-    response_header::response_header()
-        : protocol_{"HTTP"}
-        , version_{"2.0"}
-        , code_{204}
-        , message_{translate_code(code_)}
-        , fields_{}
+    cookie::cookie()
+        : name_{}
+        , value_{}
+        , domain_{}
+        , path_{}
+        , expires_{}
+        , secure_{}
+        , http_only_{}
     {
 
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_header::set_protocol(std::string const& protocol)
+    cookie& cookie::set_name(std::string const& name)
     {
-        protocol_ = protocol;
+        name_ = name;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_header::set_version(std::string const& version)
+    cookie& cookie::set_value(std::string const& value)
     {
-        version_ = version;
+        value_ = value;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_header::set_code(int code)
+    cookie& cookie::set_expiry(date const& expires)
     {
-        code_ = code;
-        message_ = translate_code(code);
+        expires_ = expires;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_header::set_message(std::string const& message)
+    cookie& cookie::make_session_cookie()
     {
-        message_ = message;
+        expires_ = boost::none;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_header::set_field(std::string const& field, std::string const& value)
+    cookie& cookie::set_secure(bool secure)
     {
-        fields_[field] = value;
+        secure_ = secure;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_header::append_field(std::string const& field, std::string const& value)
+    cookie& cookie::set_http_only(bool http_only)
     {
-        fields_[field] += value;
+        http_only_ = http_only;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string response_header::get_protocol() const
+    cookie& cookie::set_domain(std::string const& domain)
     {
-        return protocol_;
+        domain_ = domain;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string response_header::get_version() const
+    cookie& cookie::set_path(std::string const& path)
     {
-        return version_;
+        path_ = path;
+        return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    int response_header::get_code() const
+    std::string cookie::get_name() const
     {
-        return code_;
+        return name_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string response_header::get_message() const
+    std::string cookie::get_value() const
     {
-        return message_;
+        return value_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    boost::optional <std::string> response_header::get_field(std::string const& key) const
+    bool cookie::is_secure() const
     {
-        auto iter = fields_.find(key);
-        if (iter != std::end(fields_))
-            return iter->second;
-        else
-            return boost::none;
+        return secure_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    bool response_header::has_field(std::string const& key) const
+    bool cookie::is_http_only() const
     {
-        return fields_.find(key) != std::end(fields_);
+        return http_only_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string response_header::to_string() const
+    std::string cookie::get_path() const
+    {
+        return path_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string cookie::get_domain() const
+    {
+        return domain_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string cookie::to_set_cookie_string() const
     {
         std::stringstream sstr;
-        sstr << protocol_ << '/' << version_ << ' ' << code_ << ' ' << message_ << "\r\n";
-        for (auto const& i : fields_)
-        {
-            sstr << i.first << ": " << i.second << "\r\n";
-        }
-        for (auto const& cookie : cookies_)
-        {
-            sstr << "Set-Cookie: " << cookie.to_set_cookie_string() << "\r\n";
-        }
-        sstr << "\r\n";
+        sstr << name_ << "=" << value_;
+
+        if (!domain_.empty())
+            sstr << "; Domain=" << domain_;
+        if (!path_.empty())
+            sstr << "; Path=" << path_;
+        if (expires_)
+            sstr << "; Expires=" << expires_.get().to_gmt_string();
+        if (secure_)
+            sstr << "; Secure";
+        if (http_only_)
+            sstr << "; HttpOnly";
+
         return sstr.str();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void response_header::set_cookie(cookie const& cookie)
-    {
-        cookies_.push_back(cookie);
     }
 //#####################################################################################################################
 }
