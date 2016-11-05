@@ -6,6 +6,7 @@
 #include "connection_manager.hpp"
 #include "router.hpp"
 #include "settings.hpp"
+#include "session/session_cookie_generator_interface.hpp"
 
 namespace attender
 {
@@ -16,7 +17,6 @@ namespace attender
                          error_callback on_error,
                          settings setting = {});
         ~tcp_basic_server();
-
         void start(std::string const& port, std::string const& host = "0.0.0.0") override;
         void stop() override;
         settings get_settings() const override;
