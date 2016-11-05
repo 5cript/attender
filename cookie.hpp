@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <boost/optional.hpp>
+#include <cstdint>
 
 namespace attender
 {
@@ -63,6 +64,11 @@ namespace attender
         cookie& set_path(std::string const& path);
 
         /**
+         *  Set the path on which the cookie shall be accessible from.
+         **/
+        cookie& set_max_age(uint64_t age);
+
+        /**
          *  Returns the cookie name.
          **/
         std::string get_name() const;
@@ -93,6 +99,11 @@ namespace attender
         std::string get_domain() const;
 
         /**
+         *  Get the maximum age of the cookie.
+         **/
+        uint64_t get_max_age() const;
+
+        /**
          *  Creates a set cookie string.
          **/
         std::string to_set_cookie_string() const;
@@ -103,6 +114,7 @@ namespace attender
         std::string domain_; // empty means not set
         std::string path_; // empty means not set
         boost::optional <date> expires_;
+        uint64_t max_age_; // 0 = not set
         bool secure_;
         bool http_only_;
     };

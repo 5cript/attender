@@ -13,6 +13,7 @@ namespace attender
         , expires_{}
         , secure_{}
         , http_only_{}
+        , max_age_{0}
     {
 
     }
@@ -65,6 +66,12 @@ namespace attender
         return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    cookie& cookie::set_max_age(uint64_t age)
+    {
+        max_age_ = max_age;
+        return *this;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     std::string cookie::get_name() const
     {
         return name_;
@@ -95,6 +102,11 @@ namespace attender
         return domain_;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    uint64_t cookie::get_max_age() const
+    {
+        return max_age_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     std::string cookie::to_set_cookie_string() const
     {
         std::stringstream sstr;
@@ -104,6 +116,8 @@ namespace attender
             sstr << "; Domain=" << domain_;
         if (!path_.empty())
             sstr << "; Path=" << path_;
+        if (max_age_ > 0)
+            sstr << "; Max-Age=" << max_age_;
         if (expires_)
             sstr << "; Expires=" << expires_.get().to_gmt_string();
         if (secure_)
