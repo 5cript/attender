@@ -43,13 +43,13 @@ namespace attender
 
     protected:
         uint64_t written_bytes_;
-        uint64_t max_bytes_;
+        // uint64_t max_bytes_;
     };
 
     class tcp_stream_sink : public tcp_read_sink
     {
     public:
-        tcp_stream_sink(std::ostream* sink);
+        explicit tcp_stream_sink(std::ostream* sink);
         uint64_t write(const char* data, uint64_t size) override;
         uint64_t write(std::vector <char> const& buffer, uint64_t amount) override;
     private:
@@ -59,7 +59,7 @@ namespace attender
     class tcp_string_sink : public tcp_read_sink
     {
     public:
-        tcp_string_sink(std::string* sink);
+        explicit tcp_string_sink(std::string* sink);
         uint64_t write(const char* data, std::size_t size) override;
         uint64_t write(std::vector <char> const& buffer, std::size_t amount) override;
     private:

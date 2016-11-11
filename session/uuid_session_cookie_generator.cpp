@@ -2,6 +2,7 @@
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace attender
 {
@@ -51,6 +52,7 @@ namespace attender
             .set_max_age(max_age_)
             .set_domain(domain_)
             .set_path("/")
+        ;
         return keks;
     }
 //#####################################################################################################################

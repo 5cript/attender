@@ -20,7 +20,7 @@ namespace attender
         friend tcp_secure_server;
 
     public:
-        request_handler(tcp_connection_interface* connection) noexcept;
+        explicit request_handler(tcp_connection_interface* connection) noexcept;
         ~request_handler();
 
         /**
