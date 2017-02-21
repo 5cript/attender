@@ -35,8 +35,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     std::string uuid_session_cookie_generator::generate_id() const
     {
-        auto uuid = boost::uuids::random_generator{}();
-        return boost::uuids::to_string(uuid);
+        return uuid_generator::generate_id();
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::string uuid_session_cookie_generator::session_name() const
@@ -54,6 +53,12 @@ namespace attender
             .set_path("/")
         ;
         return keks;
+    }
+//#####################################################################################################################
+    std::string uuid_generator::generate_id()
+    {
+        auto uuid = boost::uuids::random_generator{}();
+        return boost::uuids::to_string(uuid);
     }
 //#####################################################################################################################
 }

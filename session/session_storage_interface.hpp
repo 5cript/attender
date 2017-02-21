@@ -53,7 +53,6 @@ namespace attender
          **/
         virtual bool set_session(std::string const& id, session const& session) = 0;
 
-
         virtual ~session_storage_interface() = default;
     };
 }

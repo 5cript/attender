@@ -52,6 +52,15 @@ namespace attender
         else
             return boost::none;
     }
+//------------------------------------------6---------------------------------------------------------------------------
+    boost::optional <std::string> request_header::get_cookie(std::string const& name) const
+    {
+        auto iter = cookies_.find(name);
+        if (iter != std::end(query_))
+            return iter->second;
+        else
+            return boost::none;
+    }
 //---------------------------------------------------------------------------------------------------------------------
     request_header::request_header(request_header_intermediate const& intermediate)
         : method_{intermediate.method}
@@ -60,6 +69,7 @@ namespace attender
         , version_{intermediate.version}
         , path_{}
         , fields_{intermediate.fields}
+        , cookies_{intermediate.cookies}
     {
         parse_url();
     }

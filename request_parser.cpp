@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cctype>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/iostreams/stream.hpp>
 
 namespace attender
@@ -157,8 +158,16 @@ namespace attender
         if (colpos == std::string::npos)
             throw std::runtime_error("header field does not contain colon");
 
-        header_.fields[boost::algorithm::trim_right_copy(line.substr(0, colpos))] =
-            boost::algorithm::trim_left_copy(line.substr(colpos + 1, line.size() - colpos - 1));
+        auto front = boost::algorithm::trim_right_copy(line.substr(0, colpos));
+        auto back = boost::algorithm::trim_left_copy(line.substr(colpos + 1, line.size() - colpos - 1));
+        if (boost::algorithm::to_lower_copy(front) == "cookie")
+        {
+            auto cookies = cookie::parse_cookies(back);
+            for (auto const& cookie : cookies)
+                header_.cookies.insert(cookie);
+        }
+        else
+            header_.fields[front] = back;
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool request_parser::expect_space()

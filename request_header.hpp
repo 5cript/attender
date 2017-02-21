@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cookie.hpp"
+
 #include <boost/optional.hpp>
 
 #include <string>
@@ -15,6 +17,7 @@ namespace attender
         std::string version;
 
         std::unordered_map <std::string, std::string> fields;
+        std::unordered_map <std::string, std::string> cookies;
     };
 
     class request_header
@@ -29,6 +32,7 @@ namespace attender
 
         boost::optional <std::string> get_field(std::string const& key) const;
         boost::optional <std::string> get_query(std::string const& key) const;
+        boost::optional <std::string> get_cookie(std::string const& name) const;
 
         request_header() = default;
 
@@ -53,5 +57,6 @@ namespace attender
 
         std::unordered_map <std::string, std::string> fields_;
         std::unordered_map <std::string, std::string> query_;
+        std::unordered_map <std::string, std::string> cookies_;
     };
 }

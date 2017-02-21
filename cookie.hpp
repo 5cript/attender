@@ -2,10 +2,12 @@
 
 #include "date.hpp"
 
+#include <boost/optional.hpp>
+
 #include <string>
 #include <unordered_map>
-#include <boost/optional.hpp>
 #include <cstdint>
+#include <vector>
 
 namespace attender
 {
@@ -17,6 +19,16 @@ namespace attender
          *
          **/
         explicit cookie();
+
+        /**
+         *  Create a cookie, setting only name and value.
+         **/
+        explicit cookie(std::string const& name, std::string const& value);
+
+        /**
+         *  Parses a cookie request header entry and makes a cookie from it.
+         **/
+        static std::unordered_map <std::string, std::string> parse_cookies(std::string const& cookie_header_entry);
 
         /**
          *  Set cookie name.

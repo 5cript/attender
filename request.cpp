@@ -100,7 +100,7 @@ namespace attender
         auto expected = get_content_length() - sink_->get_total_bytes_written();
 
         // remaining limit = Min(Amount Read Overall, Maximum Read Allowed)
-        uint64_t remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), 0ll);
+        uint64_t remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), static_cast <int64_t> (0));
 
         // limit reached?
         if (remaining_limit == 0ll)
@@ -113,7 +113,7 @@ namespace attender
         sink_->write(connection_->get_read_buffer(), std::min(expected, remaining_limit));
 
         // remaining = ContentLength - Amount Read Overall  (after read)
-        auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), 0ll);
+        auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), static_cast <int64_t> (0));
 
         if (remaining == 0ll)
             on_finished_read_.fullfill();
@@ -181,7 +181,7 @@ namespace attender
         else
         {
             // do not start a read operation, if the whole content has been read.
-            auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), 0ll);
+            auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), static_cast <int64_t> (0));
             if (remaining == 0ll)
                 on_finished_read_.fullfill();
             else
@@ -257,6 +257,11 @@ namespace attender
     boost::optional <std::string> request_handler::get_header_field(std::string const& key) const
     {
         return header_.get_field(key);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    boost::optional <std::string> request_handler::get_cookie_value(std::string const& name) const
+    {
+        return header_.get_cookie(name);
     }
 //#####################################################################################################################
 }

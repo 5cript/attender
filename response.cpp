@@ -71,6 +71,12 @@ namespace attender
         try_set("Content-Length", std::to_string(body.length()));
         try_set("Content-Type", "text/plain");
 
+        // fix code
+        if (header_.get_code() == 204 && !body.empty())
+            status(200);
+        else if (header_.get_code() == 200 && body.empty())
+            status(204);
+
         write(this, std::make_shared <std::string> (body));
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -78,6 +84,12 @@ namespace attender
     {
         try_set("Content-Length", std::to_string(body.size()));
         try_set("Content-Type", "application/octet-stream");
+
+        // fix code
+        if (header_.get_code() == 204 && !body.empty())
+            status(200);
+        else if (header_.get_code() == 200 && body.empty())
+            status(204);
 
         write(this, std::make_shared <std::vector <char>> (body));
     }

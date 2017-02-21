@@ -52,4 +52,9 @@ namespace attender
         uint64_t max_age_; // 0 = not set
         std::string domain_; // empty = not set
     };
+
+    struct uuid_generator
+    {
+        static std::string generate_id();
+    };
 }

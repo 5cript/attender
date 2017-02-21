@@ -1,6 +1,7 @@
 #include "cookie.hpp"
 
 #include <sstream>
+#include <boost/algorithm/string.hpp>
 
 namespace attender
 {
@@ -16,6 +17,42 @@ namespace attender
         , http_only_{}
     {
 
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    cookie::cookie(std::string const& name, std::string const& value)
+        : name_{name}
+        , value_{value}
+        , domain_{}
+        , path_{}
+        , expires_{}
+        , max_age_{0}
+        , secure_{}
+        , http_only_{}
+    {
+
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::unordered_map <std::string, std::string> cookie::parse_cookies(std::string const& cookie_header_entry)
+    {
+        if (cookie_header_entry.empty())
+            throw std::runtime_error("cookie value is empty");
+
+        std::vector <std::string> split;
+        boost::algorithm::split(split, cookie_header_entry, boost::algorithm::is_any_of(";"), boost::algorithm::token_compress_on);
+
+        std::unordered_map <std::string, std::string> result;
+        for (auto iter = std::begin(split), end = std::end(split); iter != end; ++iter)
+        {
+            auto eqpos = iter->find('=');
+            if (eqpos == std::string::npos)
+                throw std::runtime_error("cookie name value pair does not contain '=' character");
+
+            auto left = boost::algorithm::trim_left_copy(iter->substr(0, eqpos));
+            auto right = iter->substr(eqpos + 1, iter->size() - eqpos - 1);
+
+            result[left] = right;
+        }
+        return result;
     }
 //---------------------------------------------------------------------------------------------------------------------
     cookie& cookie::set_name(std::string const& name)

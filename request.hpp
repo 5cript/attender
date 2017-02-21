@@ -134,6 +134,15 @@ namespace attender
          */
         boost::optional <std::string> get_header_field(std::string const& key) const;
 
+        /**
+         *  Returns a cookie field from the request header.
+         *
+         *  @param name The cookie name.
+         *
+         *  @return The cookie value or boost::none.
+         **/
+        boost::optional <std::string> get_cookie_value(std::string const& name) const;
+
     private:
         // read handlers
         void header_read_handler(boost::system::error_code ec);
