@@ -52,9 +52,44 @@ namespace attender
         return settings_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void tcp_basic_server::get(std::string path_template, connected_callback const& on_connect)
+    void tcp_basic_server::get(std::string const& path_template, connected_callback const& on_connect)
     {
         router_.add_route("GET", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::put(std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("PUT", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::post(std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("POST", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::head(std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("HEAD", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::delete_(std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("DELETE", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::options(std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("OPTIONS", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::connect(std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route("CONNECT", path_template, on_connect);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::route(std::string const& route_name, std::string const& path_template, connected_callback const& on_connect)
+    {
+        router_.add_route(route_name, path_template, on_connect);
     }
 //#####################################################################################################################
 }
