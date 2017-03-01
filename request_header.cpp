@@ -1,6 +1,9 @@
 #include "request_header.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include <regex>
+#include <iostream>
 
 namespace attender
 {
@@ -30,11 +33,6 @@ namespace attender
         return version_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string request_header::get_fragment() const
-    {
-        return fragment_;
-    }
-//---------------------------------------------------------------------------------------------------------------------
     boost::optional <std::string> request_header::get_field(std::string const& key) const
     {
         auto iter = fields_.find(key);
@@ -52,7 +50,7 @@ namespace attender
         else
             return boost::none;
     }
-//------------------------------------------6---------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
     boost::optional <std::string> request_header::get_cookie(std::string const& name) const
     {
         auto iter = cookies_.find(name);
@@ -76,38 +74,29 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void request_header::parse_query(std::string const& query)
     {
-        std::regex rgx( R"((\w+=(?:[\w-])+)(?:(?:&|;)(\w+=(?:[\w-])+))*)" );
-        std::smatch match;
+        std::vector <std::string> split_by_sep;
+        boost::algorithm::split(split_by_sep, query, boost::algorithm::is_any_of("&;"), boost::algorithm::token_compress_off);
 
-        if (std::regex_match(query, match, rgx))
+        for (auto const& pair : split_by_sep)
         {
-            for (auto i = std::begin(match) + 1; i < std::end(match); ++i)
-            {
-                auto pos = i->str().find_first_of('=');
-                query_[i->str().substr(pos+1)] = i->str().substr(0, pos);
-            }
+            auto pos = pair.find('=');
+            if (pos == std::string::npos)
+                throw std::invalid_argument("invalid query format");
+
+            query_[pair.substr(0, pos)] = pair.substr(pos + 1, pair.length() - pos - 1);
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
     void request_header::parse_url()
     {
-        std::regex rgx( R"((?:(?:(\/(?:(?:[a-zA-Z0-9]|[-_~!$&']|[()]|[*+,;=:@])+(?:\/(?:[a-zA-Z0-9]|[-_~!$&']|[()]|[*+,;=:@])+)*)?)|\/)?(?:(\?(?:\w+=(?:[\w-])+)(?:(?:&|;)(?:\w+=(?:[\w-])+))*))?(?:(#(?:\w|\d|=|\(|\)|\\|\/|:|,|&|\?)+))?))" );
-        std::smatch match;
-
-        if (std::regex_match(url_, match, rgx))
+        auto query_pos = url_.find_last_of('?');
+        if (query_pos != std::string::npos)
         {
-            for (auto i = std::begin(match) + 1; i < std::end(match); ++i)
-            {
-                if (i->str().front() == '/')
-                    path_ = i->str();
-                else if (i->str().front() == '?')
-                    parse_query(i->str().substr(1, i->str().length() - 1));
-                else if (i->str().front() == '#')
-                    fragment_ = i->str().substr(1, i->str().length() - 1);
-            }
+            parse_query(url_.substr(query_pos + 1, url_.length() - query_pos - 1));
+            path_ = url_.substr(0, query_pos);
         }
         else
-            throw std::invalid_argument("Not a valid url");
+            path_ = url_;
     }
 //#####################################################################################################################
 }

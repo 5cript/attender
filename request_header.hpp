@@ -53,7 +53,6 @@ namespace attender
         std::string protocol_;
         std::string version_;
         std::string path_;
-        std::string fragment_;
 
         std::unordered_map <std::string, std::string> fields_;
         std::unordered_map <std::string, std::string> query_;
