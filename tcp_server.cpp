@@ -23,6 +23,11 @@ namespace attender
         acceptor_.async_accept(socket_,
             [this](boost::system::error_code ec)
             {
+                // the operation was aborted. This usually means, that the server has been destroyed.
+                // accessing this is unsafe now.
+                if (ec == boost::asio::error::operation_aborted)
+                    return;
+
                 if (!acceptor_.is_open())
                     return;
 

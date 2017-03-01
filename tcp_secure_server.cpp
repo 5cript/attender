@@ -26,6 +26,12 @@ namespace attender
         acceptor_.async_accept(internal::get_socket_layer(*socket_),
             [this](boost::system::error_code ec)
             {
+                // The operation was aborted. This most likely means, that the connection was terminated.
+                // Accessing this from here is unsafe.
+                if (ec == boost::asio::error::operation_aborted)
+                    return;
+
+
                 if (!acceptor_.is_open())
                     return;
 
