@@ -313,6 +313,11 @@ namespace attender
         */
         void check_deadline(boost::asio::deadline_timer* timer, boost::system::error_code const& ec)
         {
+            // The operation was aborted. This most likely means, that the connection was terminated.
+            // Accessing this from here is unsafe.
+            if (ec == boost::asio::error::operation_aborted)
+                return;
+
             // The socket is not open anymore, therefore timeout checkings are no longer relevant.
             if (stopped())
                 return;
