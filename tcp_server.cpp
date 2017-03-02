@@ -45,9 +45,10 @@ namespace attender
                         {
                             // socket closed
                             if (ec.value() == 2)
-                            {
                                 return;
-                            }
+
+                            if (ec == boost::asio::error::operation_aborted)
+                                return;
 
                             if (ec)
                             {

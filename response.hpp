@@ -89,6 +89,33 @@ namespace attender
         void send(std::vector <char> const& body);
 
         /**
+         *  Sends the HTTP response. After a call to send, the status and header fields
+         *  can no longer be changed as they will be sent with this function.
+         *  As this function completes the response, chaining will no longer be possible.
+         *  THE STREAM MUST BE SEEKABLE (some boost iostreams do not).
+         *  THE STREAM MUST SURVIVE FOR THE ENTIRE CONNECTION.
+         *
+         *  Content-Length will automatically be set, if not previously defined.
+         *
+         *  @param body A body to send.
+         *  @param on_finish A callback function, that is called after the send operation finished.
+         */
+        void send(std::istream& body, std::function <void()> on_finish = nop);
+
+        /**
+         *  Sends the HTTP response. After a call to send, the status and header fields
+         *  can no longer be changed as they will be sent with this function.
+         *  As this function completes the response, chaining will no longer be possible.
+         *  The stream must provide seek and tell (some boost iostreams do not).
+         *
+         *  Content-Length will automatically be set, if not previously defined.
+         *  Content-Type will be deduced from the filename if possible, "application/octet-stream" otherwise.
+         *
+         *  @param fileName A file to open in binary read mode and send.
+         */
+        void send_file(std::string const& fileName);
+
+        /**
          *  This function will set the status and send the status
          *  message a string in the body.
          *  The code must be supported / known to attender.

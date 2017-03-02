@@ -3,7 +3,11 @@
 #include "tcp_server.hpp"
 #include "mime.hpp"
 
+#include <boost/filesystem.hpp>
+
 #include <iostream>
+#include <fstream>
+#include <memory>
 
 namespace attender
 {
@@ -12,22 +16,35 @@ namespace attender
      *  Trick to hide template in c++ file. So that tcp_connection.hpp is not required in the header.
      */
     template <typename T>
-    void write(response_handler* repHandler, std::shared_ptr <T> data)
+    static void write(response_handler* repHandler, std::shared_ptr <T> data, std::function <void()> cleanup = nop)
     {
-        repHandler->send_header([repHandler, data](boost::system::error_code ec){
+        repHandler->send_header([repHandler, data, cleanup](boost::system::error_code ec){
             // end the connection, on error
             if (ec)
             {
+                cleanup();
                 repHandler->end();
                 return;
             }
 
-            repHandler->get_connection()->write(*data, [repHandler](boost::system::error_code ec){
+            repHandler->get_connection()->write(*data, [repHandler, cleanup](boost::system::error_code ec){
                 // end no matter what.
+                cleanup();
                 repHandler->end();
             });
         });
     }
+//---------------------------------------------------------------------------------------------------------------------
+    struct stream_keeper
+    {
+        stream_keeper(std::istream& stream) : stream{&stream}
+        {
+        }
+
+        operator std::istream&() {return *stream;}
+
+        std::istream* stream;
+    };
 //#####################################################################################################################
     response_handler::response_handler(tcp_connection_interface* connection) noexcept
         : connection_{connection}
@@ -92,6 +109,31 @@ namespace attender
             status(204);
 
         write(this, std::make_shared <std::vector <char>> (body));
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void response_handler::send(std::istream& body, std::function <void()> on_finish)
+    {
+        body.seekg(0, std::ios_base::end);
+        auto size = body.tellg();
+        body.seekg(0);
+
+        try_set("Content-Length", std::to_string(size));
+        try_set("Content-Type", "application/octet-stream");
+
+        if (header_.get_code() == 204 && size > 0)
+            status(200);
+        else if (header_.get_code() == 200 && size == 0)
+            status(204);
+
+        write(this, std::make_shared <stream_keeper> (body), on_finish);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void response_handler::send_file(std::string const& fileName)
+    {
+        type(boost::filesystem::path{fileName}.extension().string());
+
+        auto reader = std::make_shared <std::ifstream> (fileName, std::ios_base::binary);
+        send(*reader.get(), [reader]{}); // binds the shared ptr to the function, extending the life time, until the write operation terminates.
     }
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::send_status(int code)

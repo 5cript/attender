@@ -47,4 +47,6 @@ namespace attender
     // accept callback
     template <typename SocketT>
     using accept_callback = std::function <bool(SocketT const& /* sock */)>;
+
+    constexpr auto nop = []{};
 }
