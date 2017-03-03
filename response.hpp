@@ -135,6 +135,13 @@ namespace attender
         response_handler& location(std::string const& where);
 
         /**
+         *  Sets the HTTP Link response header entry.
+         *
+         *  @param links a map that maps rel (see documentation of Link header entry) to an url.
+         */
+        response_handler& links(std::map <std::string /* rel */, std::string /* url */> const& links);
+
+        /**
          *  Performs a redirect to a different url or path.
          *  This only sets the code and "Location" header field.
          *  This still has to be completed with an end statement (send, end)

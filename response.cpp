@@ -88,6 +88,24 @@ namespace attender
         return location(where);
     }
 //---------------------------------------------------------------------------------------------------------------------
+    response_handler& response_handler::links(std::map <std::string /* rel */, std::string /* url */> const& links)
+    {
+        std::string value;
+        for (auto const& i : links)
+        {
+            value += "<";
+            value += i.second;
+            value += ">; rel=\"";
+            value += i.first;
+            value += "\", ";
+        }
+        value.pop_back();
+        value.pop_back();
+
+        set("Links", value);
+        return *this;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void response_handler::send(std::string const& body)
     {
         try_set("Content-Length", std::to_string(body.length()));
