@@ -76,11 +76,16 @@ namespace attender
         return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    response_handler& response_handler::location(std::string const& where)
+    {
+        header_.set_field("Location", where);
+        return *this;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     response_handler& response_handler::redirect(std::string const& where, int code)
     {
         header_.set_code(code);
-        header_.set_field("Location", where);
-        return *this;
+        return location(where);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::send(std::string const& body)

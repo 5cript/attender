@@ -128,6 +128,13 @@ namespace attender
         void send_status(int code);
 
         /**
+         *  Sets the location http header value to the specified path value.
+         *
+         *  @param where The location to be set in the location header.
+         */
+        response_handler& location(std::string const& where);
+
+        /**
          *  Performs a redirect to a different url or path.
          *  This only sets the code and "Location" header field.
          *  This still has to be completed with an end statement (send, end)
