@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tcp_fwd.hpp"
+#include "mounting.hpp"
 
 #include <regex>
 #include <string>
@@ -50,6 +51,12 @@ namespace attender
     public:
         void add_route(std::string const& method, std::string const& path_template, connected_callback const& callback);
         void add_route(route const& r);
+        void mount(
+            std::string const& root_path,
+            std::string const& path_template,
+            mount_callback const& callback,
+            mount_option_set const& supported_methods
+        );
 
         boost::optional <route> find_route(request_header const& header) const;
 

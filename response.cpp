@@ -64,7 +64,7 @@ namespace attender
         return connection_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    response_handler&  response_handler::append(std::string const& field, std::string const& value)
+    response_handler& response_handler::append(std::string const& field, std::string const& value)
     {
         header_.append_field(field, value);
         return *this;

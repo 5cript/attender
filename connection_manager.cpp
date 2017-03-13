@@ -13,10 +13,8 @@ namespace attender
 //#####################################################################################################################
     void connection_manager::remove(tcp_connection_interface* connection)
     {
-        {
-            std::lock_guard <std::mutex> guard (connectionsLock_);
-            connections_.erase(connection);
-        }
+        std::lock_guard <std::mutex> guard (connectionsLock_);
+        connections_.erase(connection);
         free_connection(connection);
     }
 //---------------------------------------------------------------------------------------------------------------------

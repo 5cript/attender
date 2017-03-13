@@ -1,5 +1,6 @@
 #include "router.hpp"
 #include "request_header.hpp"
+#include "response.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -128,6 +129,83 @@ namespace attender
     void request_router::add_route(route const& r)
     {
         routes_.push_back(r);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void request_router::mount(
+        std::string const& root_path,
+        std::string const& path_template,
+        mount_callback const& callback,
+        mount_option_set const& supported_methods
+    )
+    {
+        if (supported_methods.empty())
+            throw std::invalid_argument("supported methods must not be empty.");
+
+        #define WRAP(...) \
+            __VA_ARGS__
+
+        #define MOUNT_CASE_BEGIN_BASE(METHOD, CAPTURE_BOX) \
+        case (mount_options::METHOD): \
+        { \
+            add_route({#METHOD, path_template, \
+            [CAPTURE_BOX](auto req, auto res) { \
+            mount_response resp; \
+            if (callback(req, &resp)) \
+            {
+
+
+        #define MOUNT_CASE_BEGIN(METHOD) \
+            MOUNT_CASE_BEGIN_BASE(METHOD, callback)
+
+        #define MOUNT_CASE_BEGIN_CAPTURE(METHOD, CAPTURES) \
+            MOUNT_CASE_BEGIN_BASE(METHOD, WRAP(callback, CAPTURES))
+
+        #define MOUNT_CASE_END() \
+            }}}); \
+            break; \
+        }
+
+
+        for (auto const& method : supported_methods) switch (method)
+        {
+            MOUNT_CASE_BEGIN(GET)
+
+            MOUNT_CASE_END()
+            //------------------------------------------------------
+            MOUNT_CASE_BEGIN(PUT)
+
+            MOUNT_CASE_END()
+            //------------------------------------------------------
+            MOUNT_CASE_BEGIN(POST)
+
+            MOUNT_CASE_END()
+            //------------------------------------------------------
+            MOUNT_CASE_BEGIN(DELETE)
+
+            MOUNT_CASE_END()
+            //------------------------------------------------------
+            MOUNT_CASE_BEGIN(HEAD)
+
+            MOUNT_CASE_END()
+            //------------------------------------------------------
+            MOUNT_CASE_BEGIN_CAPTURE(OPTIONS, supported_methods)
+            {
+                bool beg = true;
+                std::string allowed_methods;
+                for (auto const& i : supported_methods)
+                {
+                    if (!beg)
+                        allowed_methods += ", ";
+                    allowed_methods += mount_option_to_string(i);
+                    beg = false;
+                }
+                resp.try_set("Allow", allowed_methods)
+                    .try_set("Server", "libattender");
+                resp.to_response(*res);
+                res->status(200).end();
+            }
+            MOUNT_CASE_END()
+        }
     }
 //---------------------------------------------------------------------------------------------------------------------
     boost::optional <route> request_router::find_route(request_header const& header) const

@@ -124,6 +124,7 @@ namespace attender
          *  mounts a path on the local system, so it can be accessed by http requests.
          *  Any requests on that path will result in corresponding actions that can be enabled or disabled.
          *
+         *  BY DEFAULT, ONLY GET, HEAD AND OPTIONS ARE ENABLED.
          *  A get request will load and transfer the file if it exists, 404 is returned otherwise.
          *  A put/post will create a file and fill it with the sent data.
          *  A delete request will delete the file specified
@@ -132,17 +133,20 @@ namespace attender
          *  A connect request, or any other custom request, will not be routed.
          *
          *  The on_connect handler will be called prior to the execution, so the option exists to deny or abort request.
-         *  After the handler finished, a check will be performed to see whether or not the connection sill persists, if not
-         *  nothing will be done, otherwise actions will be performed depending on the request method.
+         *  After the handler finished, the return value will be checked. A return value of false will mean, that the connection is
+         *  to be aborted. Do not close the connection on your or do a send operation on it.
          *
          *  All requests will be jailed to the path, but include subdirectories, except if disabled.
          *
          *  @param root_path The path to jail to.
          *  @param path_template Presume root_path is /home/user/bla and path_template is /home, then requests to /home will
          *                       be redirected to /home/user/bla
-         *  @param on_connect A handler called before executing operations. The handler may close the connection, if e.g. dubious / unauthorized.
+         *  @param on_connect A handler called before executing operations. The handler may return false, if e.g. dubious / unauthorized.
          */
-        //void mount(std::string const& root_path, std::string const& path_template, connected_callback const& on_connect);
+        void mount(std::string const& root_path,
+                   std::string const& path_template,
+                   mount_callback const& on_connect,
+                   mount_option_set const& supported_methods = {mount_options::GET, mount_options::HEAD, mount_options::OPTIONS});
 
     protected:
         virtual void do_accept() = 0;

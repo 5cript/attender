@@ -91,5 +91,15 @@ namespace attender
     {
         router_.add_route(route_name, path_template, on_connect);
     }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::mount(
+        std::string const& root_path,
+        std::string const& path_template,
+        mount_callback const& on_connect,
+        mount_option_set const& supported_methods
+    )
+    {
+        router_.mount(root_path, path_template, on_connect, supported_methods);
+    }
 //#####################################################################################################################
 }

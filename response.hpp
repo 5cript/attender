@@ -10,6 +10,8 @@ namespace attender
 {
     class response_handler
     {
+        friend mount_response;
+
     public:
         explicit response_handler(tcp_connection_interface* connection) noexcept;
         ~response_handler();

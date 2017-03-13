@@ -30,6 +30,7 @@ namespace attender
 
     class response_handler;
     class response_header;
+    class mount_response;
 
     // callback for functions with error code
     using custom_callback = std::function <void(boost::system::error_code /* ec */)>;
@@ -43,6 +44,10 @@ namespace attender
                                                response_handler* /*response*/)>;
     using connected_callback = final_callback;
     using missing_handler_callback = final_callback;
+    using interactive_connected_callback = std::function <bool(request_handler* /*request*/,
+                                                               response_handler* /*response*/)>;
+    using mount_callback = std::function <bool(request_handler* request,
+                                               mount_response* mount_response)>;
 
     // accept callback
     template <typename SocketT>
