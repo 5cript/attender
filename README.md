@@ -53,6 +53,11 @@ You can use io_context/thread_pooler.hpp as an example.
 SSL/TLS servers need a ssl_context. Due to security implications, no guarantees are made for the provided "ssl_example_context" and I highly suggest for you to implement it on your own, if security is highly critical.
 The provided implementation shall serve as an example, but is fully functional for server only certificates.
 
+### callbacks
+Almost all callbacks to registered routings provide a request_handler and a response_handler. 
+These callbacks are called through the io_service run method and do not provide thread safety to the outside of the callback.
+The end of any successful request has to be a call to some send function, or to the end function of the response_handler, otherwise there will be no termination of request -> the client will "hang".
+
 ### request_handler
 The request_handler, abbreviated req in all the examples, is responsible for doing everything on the request. It can read the request header and the content of the request. 
 
@@ -187,7 +192,7 @@ int main()
     server.post("/read_test", [](auto req, auto res) {
         // The buffer needs to keep alive. For this example a shared pointer is used.
         // But this is not required!
-        std::shared_ptr <std::string> monster {new std::string};
+        auto monster = std::make_shared <std::string>();
         req->read_body(*monster).then(
             [monster{monster}, res]()
             {
@@ -225,7 +230,7 @@ The callback in this case does not do any response related stuff, but instead is
 The return value of the callback determines whether or not the request shall proceed.
 ```C++
 server.mount("/home/username", "/mnt", [](auto req, auto mres) {
-    if (/*...*/) // I do not like this request! STOP THIS AT ONCE! (will return 404)
+    if (/*...*/) // I do not like this request! STOP THIS AT ONCE! (will return 403)
         return false;
     else // you may proceed
         return true;
