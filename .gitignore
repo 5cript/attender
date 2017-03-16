@@ -13,3 +13,4 @@ doc/xml/*
 doc/node_modules/*
 doc/.vscode/*
 doc/md/*
+build/*
