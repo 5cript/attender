@@ -1,5 +1,5 @@
 # attender
-A RESTful webservice for professionals. 
+A windows/linux RESTful webservice server for professionals built using boost::asio.
 
 ## Features
 ### What does attender have:
@@ -15,6 +15,7 @@ A RESTful webservice for professionals.
 
 ## Documentation
 **Doxygen documentation is available in the wiki.**
+https://github.com/5cript/attender/wiki
 
 ## Dependencies and Requirements
 - C++14 compliant compiler
