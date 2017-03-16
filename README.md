@@ -165,6 +165,12 @@ int main()
          res->send_status(204);
     });
     
+    // this route shows regex capabilities and path parameters.
+    server.get("/\\w*/:param1", [](auto req, auto res) {
+        std::cout << req->param("param1") << "\n";
+        res->redirect("http://www.google.com:80", 301).end();
+    });
+    
     server.start(80);
 }
 ```
