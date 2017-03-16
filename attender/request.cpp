@@ -9,7 +9,6 @@
 #include <string>
 #include <iostream>
 #include <limits>
-#include <boost/lexical_cast.hpp>
 
 namespace attender
 {
@@ -76,7 +75,7 @@ namespace attender
         params_ = params;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t request_handler::get_content_length() const
+    request_parser::buffer_size_type request_handler::get_content_length() const
     {
         auto body_length = header_.get_field("Content-Length");
 
@@ -84,7 +83,7 @@ namespace attender
             throw std::runtime_error("no content length field provided for reading body");
 
         // throws if Content-Length is not a number
-        return boost::lexical_cast <uint64_t> (body_length.get());
+        return std::atoll (body_length.get().c_str());
     }
 //---------------------------------------------------------------------------------------------------------------------
     void request_handler::body_read_handler(boost::system::error_code ec)
@@ -100,7 +99,7 @@ namespace attender
         auto expected = get_content_length() - sink_->get_total_bytes_written();
 
         // remaining limit = Min(Amount Read Overall, Maximum Read Allowed)
-        uint64_t remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), static_cast <int64_t> (0));
+        request_parser::buffer_size_type remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), static_cast <int64_t> (0));
 
         // limit reached?
         if (remaining_limit == 0ll)
@@ -121,7 +120,7 @@ namespace attender
             connection_->read();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void request_handler::initialize_read(uint64_t& max)
+    void request_handler::initialize_read(request_parser::buffer_size_type& max)
     {
         if (max == 0)
             max = std::numeric_limits <std::decay_t<decltype(max)>>::max();
@@ -134,12 +133,12 @@ namespace attender
         max_read_ = max;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t request_handler::get_read_amount() const
+    request_parser::buffer_size_type request_handler::get_read_amount() const
     {
         return sink_->get_total_bytes_written();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    callback_wrapper& request_handler::read_body(std::ostream& stream, uint64_t max)
+    callback_wrapper& request_handler::read_body(std::ostream& stream, request_parser::buffer_size_type max)
     {
         // set handler and set reader maximum
         initialize_read(max);
@@ -150,7 +149,7 @@ namespace attender
         return body_read_start(max);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    callback_wrapper& request_handler::read_body(std::string& str, uint64_t max)
+    callback_wrapper& request_handler::read_body(std::string& str, size_type max)
     {
         // set handler and set reader maximum
         initialize_read(max);
@@ -161,12 +160,12 @@ namespace attender
         return body_read_start(max);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    callback_wrapper& request_handler::body_read_start(uint64_t max)
+    callback_wrapper& request_handler::body_read_start(size_type max)
     {
         // write what we already have read by parsing the header
         if (!parser_.is_buffer_empty())
         {
-            auto from_header_buffer = std::min(max, parser_.get_buffer().length());
+            auto from_header_buffer = std::min(max, static_cast <size_type> (parser_.get_buffer().length()));
 
             auto&& body_begin = parser_.read_front(from_header_buffer); // start of body
             sink_->write(body_begin.c_str(), from_header_buffer);

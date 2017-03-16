@@ -26,7 +26,7 @@ namespace attender
          *
          *  @return Returns the actual amount of bytes written to the sink.
          */
-        virtual uint64_t write(const char* data, uint64_t size) = 0;
+        virtual size_type write(const char* data, size_type size) = 0;
 
         /**
          *  @param buffer The data to write to the sink.
@@ -34,15 +34,15 @@ namespace attender
          *
          *  @return Returns the actual amount of bytes written to the sink.
          */
-        virtual uint64_t write(std::vector <char> const& buffer, uint64_t amount) = 0;
+        virtual size_type write(std::vector <char> const& buffer, size_type amount) = 0;
 
         /**
          *  @return Returns the total amount of bytes that were written using this particular sink instance.
          */
-        uint64_t get_total_bytes_written() const;
+        size_type get_total_bytes_written() const;
 
     protected:
-        uint64_t written_bytes_;
+        size_type written_bytes_;
         // uint64_t max_bytes_;
     };
 
@@ -50,8 +50,8 @@ namespace attender
     {
     public:
         explicit tcp_stream_sink(std::ostream* sink);
-        uint64_t write(const char* data, uint64_t size) override;
-        uint64_t write(std::vector <char> const& buffer, uint64_t amount) override;
+        size_type write(const char* data, size_type size) override;
+        size_type write(std::vector <char> const& buffer, size_type amount) override;
     private:
         std::ostream* sink_;
     };
@@ -60,8 +60,8 @@ namespace attender
     {
     public:
         explicit tcp_string_sink(std::string* sink);
-        uint64_t write(const char* data, std::size_t size) override;
-        uint64_t write(std::vector <char> const& buffer, std::size_t amount) override;
+        size_type write(const char* data, size_type size) override;
+        size_type write(std::vector <char> const& buffer, size_type amount) override;
     private:
         std::string* sink_;
     };

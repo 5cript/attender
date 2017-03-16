@@ -40,7 +40,7 @@ namespace attender
          *  @param stream A stream to write to. This stream must survive until fullfill or except.
          *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
          */
-        callback_wrapper& read_body(std::ostream& stream, uint64_t max = 0);
+        callback_wrapper& read_body(std::ostream& stream, size_type max = 0);
 
         /**
          *  Reads tcp-stream contents to the provided sink (in this case a string).
@@ -52,12 +52,12 @@ namespace attender
          *  @param str A string to write to. This stream must survive until fullfill or except.
          *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
          */
-        callback_wrapper& read_body(std::string& str, uint64_t max = 0);
+        callback_wrapper& read_body(std::string& str, size_type max = 0);
 
         /**
          *  Returns the amount of total bytes read in the last read call that was issued.
          */
-        uint64_t get_read_amount() const;
+        size_type get_read_amount() const;
 
         /**
          *  Contains the hostname derived from the Host HTTP header.
@@ -150,9 +150,9 @@ namespace attender
 
     private:
         // internals
-        uint64_t get_content_length() const;
-        void initialize_read(uint64_t& max);
-        callback_wrapper& body_read_start(uint64_t max);
+        request_parser::buffer_size_type get_content_length() const;
+        void initialize_read(request_parser::buffer_size_type& max);
+        callback_wrapper& body_read_start(request_parser::buffer_size_type max);
 
     private:
         // befriended
@@ -167,7 +167,7 @@ namespace attender
         parse_callback on_parse_;
         std::unordered_map <std::string, std::string> params_;
         callback_wrapper on_finished_read_;
-        uint64_t max_read_;
+        request_parser::buffer_size_type max_read_;
     };
 //#####################################################################################################################
 }

@@ -27,7 +27,7 @@ namespace attender
                 return;
             }
 
-            repHandler->get_connection()->write(*data, [repHandler, cleanup](boost::system::error_code ec){
+            repHandler->get_connection()->write(*data, [repHandler, cleanup](boost::system::error_code){
                 // end no matter what.
                 cleanup();
                 repHandler->end();
@@ -170,7 +170,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::end()
     {
-        send_header([this](boost::system::error_code ec){
+        send_header([this](boost::system::error_code){
             connection_->get_parent()->get_connections()->remove(connection_);
             // further use of this is invalid from here.
         });

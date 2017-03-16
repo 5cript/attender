@@ -227,7 +227,7 @@ namespace attender
         return header_buffer_;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    std::string request_parser::read_front(std::size_t length)
+    std::string request_parser::read_front(size_type length)
     {
         auto amount = std::min(length, header_buffer_.length());
         auto word = header_buffer_.substr(0, amount);

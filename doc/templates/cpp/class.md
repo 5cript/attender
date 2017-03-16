@@ -25,6 +25,7 @@
 ## Members
 
 {{#each filtered.compounds}}
+
 ---
 #### {{title proto}} {{anchor refid}}
 
@@ -33,6 +34,7 @@
 {{detaileddescription}}
 {{/each}}
 {{#each filtered.members}}
+
 ---
 #### {{title proto}} {{anchor refid}}
 

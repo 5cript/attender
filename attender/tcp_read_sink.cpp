@@ -10,7 +10,7 @@ namespace attender
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t tcp_read_sink::get_total_bytes_written() const
+    size_type tcp_read_sink::get_total_bytes_written() const
     {
         return written_bytes_;
     }
@@ -20,14 +20,14 @@ namespace attender
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t tcp_stream_sink::write(const char* data, uint64_t size)
+    size_type tcp_stream_sink::write(const char* data, size_type size)
     {
         written_bytes_ += size;
         sink_->write(data, size);
         return size;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t tcp_stream_sink::write(std::vector <char> const& buffer, uint64_t amount)
+    size_type tcp_stream_sink::write(std::vector <char> const& buffer, size_type amount)
     {
         return write(buffer.data(), std::min(buffer.size(), amount));
     }
@@ -37,14 +37,14 @@ namespace attender
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t tcp_string_sink::write(const char* data, uint64_t size)
+    size_type tcp_string_sink::write(const char* data, size_type size)
     {
         written_bytes_ += size;
         sink_->append(data, size);
         return size;
     }
 //---------------------------------------------------------------------------------------------------------------------
-    uint64_t tcp_string_sink::write(std::vector <char> const& buffer, uint64_t amount)
+    size_type tcp_string_sink::write(std::vector <char> const& buffer, size_type amount)
     {
         return write(buffer.data(), std::min(buffer.size(), amount));
     }

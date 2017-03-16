@@ -54,4 +54,6 @@ namespace attender
     using accept_callback = std::function <bool(SocketT const& /* sock */)>;
 
     constexpr auto nop = []{};
+
+    using size_type = std::size_t;
 }

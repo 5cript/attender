@@ -36,6 +36,9 @@ namespace attender
     class request_parser
     {
     public:
+        using buffer_size_type = std::string::size_type;
+
+    public:
         request_parser();
 
         /**
@@ -65,7 +68,7 @@ namespace attender
          *  @param length The amount of bytes to read and remove.
          *  @return Returns the read string. Warning: this might be smaller than 'length'.
          */
-        std::string read_front(std::size_t length);
+        std::string read_front(size_type length);
 
         /**
          *  @return get_buffer().empty();
