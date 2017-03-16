@@ -182,15 +182,15 @@ int main()
         // But this is not required!
         std::shared_ptr <std::string> monster {new std::string};
         req->read_body(*monster).then(
-            [monster{monster}, res, req]()
+            [monster{monster}, res]()
             {
                 std::cout << "all done!\n";
                 std::cout << *monster << "\n";
                 // end with 204 OK
-                res->status(204)->end;
+                res->status(204)->end();
             }
         ).except(
-            [extender{monster}, res](boost::system::error_code ec)
+            [extender{monster}](boost::system::error_code ec)
             {
                 // something went wrong!
                 // res, req got freed!
