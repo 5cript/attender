@@ -1,5 +1,4 @@
 {{kind}}-{{name}}.md
----
 # {{kind}} `{{name}}` {{anchor refid}}
 
 {{#if basecompoundref}}
