@@ -8,6 +8,9 @@
 
 namespace attender
 {
+    /**
+     *  The response_handler is for everything writing and sending related.
+     */
     class response_handler
     {
         friend mount_response;

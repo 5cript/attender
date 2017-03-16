@@ -6,6 +6,9 @@
 
 namespace attender
 {
+    /**
+     *  A mount response is like a response_handler, but has much less functions.
+     */
     class mount_response
     {
     public:

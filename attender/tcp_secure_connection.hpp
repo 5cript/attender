@@ -8,6 +8,9 @@
 
 namespace attender
 {
+    /**
+     *  A secure tcp connection.
+     */
     class tcp_secure_connection : public tcp_connection_base <
         boost::asio::ssl::stream<boost::asio::ip::tcp::socket>
     >

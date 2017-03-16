@@ -8,6 +8,9 @@
 
 namespace attender
 {
+    /**
+     *  A secure SSL/TLS server.
+     */
     class tcp_secure_server : public tcp_basic_server
     {
     public:

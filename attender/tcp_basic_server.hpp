@@ -10,6 +10,9 @@
 
 namespace attender
 {
+    /**
+     *  The server base, that combines common functionality of all server types.
+     */
     class tcp_basic_server : public tcp_server_interface
     {
     public:

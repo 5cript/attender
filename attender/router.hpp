@@ -46,6 +46,9 @@ namespace attender
         connected_callback callback_;
     };
 //#####################################################################################################################
+    /**
+     *  The request router maps paths to handler functions.
+     */
     class request_router
     {
     public:

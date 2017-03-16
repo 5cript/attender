@@ -4,6 +4,9 @@
 
 namespace attender
 {
+    /**
+     *  An unsecure tcp connection.
+     */
     class tcp_connection : public tcp_connection_base <asio::ip::tcp::socket>
     {
     public:

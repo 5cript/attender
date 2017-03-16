@@ -10,6 +10,9 @@
 
 namespace attender
 {
+    /**
+     *  Internal lifetime binder that combines the lifetime of the response and request object.
+     */
     class lifetime_binding
     {
     public:

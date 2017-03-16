@@ -11,6 +11,9 @@
 
 namespace attender
 {
+    /**
+     *  A cookie helper class that contains cookie data and provides utilitarian functions.
+     */
     class cookie
     {
     public:

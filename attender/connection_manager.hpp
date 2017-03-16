@@ -10,6 +10,9 @@
 
 namespace attender
 {
+    /**
+     *  The connection manager holds all active connections.
+     */
     class connection_manager
     {
     public:

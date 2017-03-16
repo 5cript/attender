@@ -6,6 +6,9 @@
 
 namespace attender
 {
+    /**
+     *  An insecure server.
+     */
     class tcp_server : public tcp_basic_server
     {
     public:

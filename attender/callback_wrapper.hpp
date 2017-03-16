@@ -5,6 +5,9 @@
 
 namespace attender
 {
+    /**
+     *  The callback wrapper provides javascript promise like .then().except() syntax.
+     */
     class callback_wrapper
     {
     public:

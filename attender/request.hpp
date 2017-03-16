@@ -13,6 +13,9 @@
 namespace attender
 {
 //#####################################################################################################################
+    /**
+     *  The request_handler is for anything request and reading related.
+     */
     class request_handler
     {
         friend tcp_basic_server;

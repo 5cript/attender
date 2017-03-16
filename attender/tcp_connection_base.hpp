@@ -31,6 +31,9 @@ namespace attender
         }
     }
 
+    /**
+     *  A tcp_connection_base provides common functionality for tcp connections.
+     */
     template <typename SocketT>
     class tcp_connection_base : public tcp_connection_interface
     {

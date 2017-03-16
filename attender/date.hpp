@@ -7,6 +7,9 @@
 
 namespace attender
 {
+    /**
+     *  A date object used for date format conversion.
+     */
     class date
     {
     public:
