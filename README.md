@@ -19,6 +19,7 @@ A windows/linux RESTful webservice server for professionals built using boost::a
 ### What does attender not have (yet):
 - JSON / XML support (planed)
 - keep alive
+- custom error code pages.
 
 ## Documentation
 **Doxygen documentation is available in the wiki.**
