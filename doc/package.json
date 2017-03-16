@@ -1,0 +1,15 @@
+{
+  "name": "attender_doc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "doxygen2md": "git+ssh://git@github.com/5cript/doxygen2md.git",
+    "find-remove": "^1.0.0"
+  }
+}
