@@ -39,7 +39,9 @@ This project provides a cmake file.
 
 ## Basics
 ### expressjs inspiration
-The library was inspired by express.js. The API is not identical and support is not identical, but if you find this documentation lacking, you can get a first impression at https://expressjs.com/en/4x/api.html.
+The library was inspired by express.js. The API is not identical and support is not identical, but if you find this documentation lacking, you can get a first impression at:
+- [ExpressJS Request](https://expressjs.com/en/4x/api.html#req)
+- [ExpressJS Response](https://expressjs.com/en/4x/api.html#res)
 
 ### managed_io_context
 The managed io context is a wrapper for boost::asio::io_service. It accepts some kind of attender::async_model which handels the usage of the io_service. You can subclass attender::async_model and provide your own implementation.
