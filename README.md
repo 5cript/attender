@@ -73,7 +73,7 @@ which keeps all sessions in memory. But this has the drawback, that sessions do 
 ### How to create a server
 The following code example shows how to create a server and runs it on port 80.
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 #include <iostream>
 
@@ -103,7 +103,7 @@ int main()
 
 ### How to create a secure server
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 #include <openssl/err.h>
 
@@ -154,7 +154,7 @@ int main()
 
 ### How to add routings
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 #include <iostream>
 
@@ -183,7 +183,7 @@ int main()
 
 ### How to read
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 int main() 
 {
@@ -241,7 +241,7 @@ server.mount("/home/username", "/mnt", [](auto req, auto mres) {
 ### Sessions
 This is example shows how to get, create and delete a session.
 ```C++
-#include <attender.hpp>
+#include <attender/attender.hpp>
 
 int main()
 {
