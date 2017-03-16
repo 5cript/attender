@@ -1,3 +1,3 @@
 var findRemoveSync = require('find-remove')
 
-findRemoveSync('.', {extensions: ['.md']})
+findRemoveSync('./md', {extensions: ['.md'], maxLevel: 1})

@@ -1,6 +1,14 @@
 var doxy2md = require('doxygen2md')
 var fs = require('fs')
 
+var mkdirSync = function (path) {
+  try {
+    fs.mkdirSync(path);
+  } catch(e) {
+    if ( e.code != 'EEXIST' ) throw e;
+  }
+}
+
 const makeOptions = () => {
     var options = doxy2md.defaultOptions
     options.directory = './xml'
@@ -11,7 +19,7 @@ const makeOptions = () => {
         var lines = content.split('\n')
         if (lines.length > 0)
         {
-            var fileName = lines[0]
+            var fileName = './md/' + lines[0]
             lines.splice(0, 1)
             fs.writeFileSync(fileName, lines.join('\n'), {'flag': 'w'})
         }
@@ -36,6 +44,7 @@ const render = (options) => {
     doxy2md.render(options)
 }
 
+mkdirSync('./md')
 render(makeOptions())
 
 var regex = /(\(#\w*\))/ // classattender_1_1request__handler -> class-request_handler
