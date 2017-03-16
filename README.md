@@ -33,10 +33,11 @@ https://github.com/5cript/attender/wiki
 - openssl
 
 ## How to build
-This project provides a cmake file.
+This project provides a cmake file (for a static library).
 - mkdir build
 - cd build
 - cmake ..
+- make
 
 ## Basics
 ### expressjs inspiration
