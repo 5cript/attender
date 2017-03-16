@@ -45,4 +45,6 @@ namespace attender
     private:
         response_header header_;
     };
+
+    bool validate_path(std::string const& str);
 }

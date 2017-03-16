@@ -1,6 +1,7 @@
 #include "router.hpp"
 #include "request_header.hpp"
 #include "response.hpp"
+#include "request.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -169,23 +170,38 @@ namespace attender
         for (auto const& method : supported_methods) switch (method)
         {
             MOUNT_CASE_BEGIN(GET)
-
+            {
+                if (validate_path(req->path()))
+                    res->status(404).end();
+            }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(PUT)
-
+            {
+                if (validate_path(req->path()))
+                    res->status(404).end();
+            }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(POST)
-
+            {
+                if (validate_path(req->path()))
+                    res->status(404).end();
+            }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(DELETE)
-
+            {
+                if (validate_path(req->path()))
+                    res->status(404).end();
+            }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(HEAD)
-
+            {
+                if (validate_path(req->path()))
+                    res->status(404).end();
+            }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN_CAPTURE(OPTIONS, supported_methods)
