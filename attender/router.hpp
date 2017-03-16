@@ -13,6 +13,13 @@
 namespace attender
 {
 //#####################################################################################################################
+    enum class match_result
+    {
+        no_match,
+        path_match, // no METHOD match
+        full_match
+    };
+//#####################################################################################################################
     class path_part
     {
     public:
@@ -20,6 +27,7 @@ namespace attender
 
         bool is_parameter() const;
         std::string get_template() const;
+        std::string get_part() const;
         std::regex get_pattern() const;
 
         bool matches(std::string const& str) const;
@@ -32,8 +40,8 @@ namespace attender
     class route
     {
     public:
-        route(std::string method, std::string const& path_template, connected_callback const& callback);
-        bool matches(request_header const& header) const;
+        route(std::string method, std::string const& path_template, connected_callback const& callback, bool mount_route = false);
+        match_result matches(request_header const& header) const;
         std::unordered_map <std::string, std::string> get_path_parameters(std::string const& path) const;
         connected_callback get_callback() const;
 
@@ -44,6 +52,7 @@ namespace attender
         std::string method_;
         std::vector <path_part> path_parts_;
         connected_callback callback_;
+        bool mount_route_;
     };
 //#####################################################################################################################
     /**
@@ -61,7 +70,7 @@ namespace attender
             mount_option_set const& supported_methods
         );
 
-        boost::optional <route> find_route(request_header const& header) const;
+        boost::optional <route> find_route(request_header const& header, match_result& match_level) const;
 
     private:
         std::vector <route> routes_;

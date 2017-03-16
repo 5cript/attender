@@ -5,7 +5,6 @@
 
 #include <boost/filesystem.hpp>
 
-#include <iostream>
 #include <fstream>
 #include <memory>
 
@@ -56,7 +55,6 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     response_handler::~response_handler()
     {
-        std::cout << "response destroyed\n";
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection_interface* response_handler::get_connection()
@@ -151,12 +149,15 @@ namespace attender
         write(this, std::make_shared <stream_keeper> (body), on_finish);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_handler::send_file(std::string const& fileName)
+    bool response_handler::send_file(std::string const& fileName)
     {
-        type(boost::filesystem::path{fileName}.extension().string());
-
         auto reader = std::make_shared <std::ifstream> (fileName, std::ios_base::binary);
+        if (!reader->good())
+            return false;
+
+        type(boost::filesystem::path{fileName}.extension().string(), true);
         send(*reader.get(), [reader]{}); // binds the shared ptr to the function, extending the life time, until the write operation terminates.
+        return true;
     }
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::send_status(int code)
@@ -201,13 +202,14 @@ namespace attender
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    response_handler& response_handler::type(std::string const& mime)
+    response_handler& response_handler::type(std::string const& mime, bool no_except)
     {
-        auto set_type = [this](std::string const& what)
+        auto set_type = [this, no_except](std::string const& what)
         {
-            if (what.empty())
+            if (what.empty() && !no_except)
                 throw std::invalid_argument("could not find appropriate mime type from extension");
-            header_.set_field("Content-Type", what);
+            else if (!what.empty())
+                header_.set_field("Content-Type", what);
         };
 
         if (mime.find('/') != std::string::npos)

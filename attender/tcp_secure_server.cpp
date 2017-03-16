@@ -72,7 +72,8 @@ namespace attender
                                         }
 
                                         // finished header parsing.
-                                        auto maybeRoute = router_.find_route(req->get_header());
+                                        match_result best_match;
+                                        auto maybeRoute = router_.find_route(req->get_header(), best_match);
                                         if (maybeRoute)
                                         {
                                             req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().get_path()));
@@ -80,7 +81,9 @@ namespace attender
                                         }
                                         else
                                         {
-                                            if (on_missing_handler_)
+                                            if (best_match == match_result::path_match)
+                                                res->send_status(405);
+                                            else if (on_missing_handler_)
                                                 on_missing_handler_(req, res);
                                             else
                                             {

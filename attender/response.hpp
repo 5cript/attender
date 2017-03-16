@@ -64,10 +64,11 @@ namespace attender
          *              png -> image/png
          *              application/json -> application/json
          *              json -> application/json
+         *  @param no_except Does not throw on failure, but instead fails silently by doing nothing.
          *
          *  @return *this for chaining.
          */
-        response_handler& type(std::string const& mime);
+        response_handler& type(std::string const& mime, bool no_except = false);
 
         /**
          *  Sends the HTTP response. After a call to send, the status and header fields
@@ -118,7 +119,7 @@ namespace attender
          *
          *  @param fileName A file to open in binary read mode and send.
          */
-        void send_file(std::string const& fileName);
+        bool send_file(std::string const& fileName);
 
         /**
          *  This function will set the status and send the status

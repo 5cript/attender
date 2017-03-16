@@ -18,8 +18,6 @@
 #include <utility>
 #include <type_traits>
 
-#include <iostream>
-
 namespace attender
 {
     namespace internal
@@ -73,7 +71,6 @@ namespace attender
         ~tcp_connection_base()
         {
             stop();
-            std::cout << "connection died\n";
 
             // This must be the last action of this function
             kept_alive_.reset(nullptr);

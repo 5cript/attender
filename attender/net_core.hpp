@@ -6,6 +6,10 @@
 // these macros are meant to be overridden by -D flag
 // do not define them anywhere else.
 
+#ifdef _WIN32
+#   define WINDOWS
+#endif // _WIN32
+
 #ifndef CONFIG_MAX_HEADER_FIELDS
 #   define CONFIG_MAX_HEADER_FIELDS 256
 #endif // CONFIG_MAX_HEADER_FIELDS

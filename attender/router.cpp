@@ -3,13 +3,12 @@
 #include "response.hpp"
 #include "request.hpp"
 
+#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <stdexcept>
 #include <deque>
-
-// DELETE ME
-#include <iostream>
+#include <fstream>
 
 namespace attender
 {
@@ -19,23 +18,20 @@ namespace attender
         , pattern_([&part]() -> std::string {
             if (!part.empty() && part.front() == ':')
                 return ".*";
-            else
-                return part;
+            else {
+                // implicitly add ^ and $.
+                using namespace std::string_literals;
+                auto p = part;
+                if (p.front() != '^')
+                    p = "^"s + p;
+                if (p.back() != '$')
+                    p.push_back('$');
+                return p;
+            }
         }())
     {
-        using namespace std::string_literals;
-
         if (part == ":")
             throw std::invalid_argument("parameters need a valid name");
-
-        // implicitly add ^ and $.
-        if (!is_parameter())
-        {
-            if (part_.front() != '^')
-                part_ = "^"s + part_;
-            if (part_.back() != '$')
-                part_.push_back('$');
-        }
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool path_part::matches(std::string const& str) const
@@ -60,44 +56,75 @@ namespace attender
     {
         return pattern_;
     }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string path_part::get_part() const
+    {
+        return part_;
+    }
 //#####################################################################################################################
-    route::route(std::string method, std::string const& path_template, connected_callback const& callback)
+    route::route(std::string method, std::string const& path_template, connected_callback const& callback, bool mount_route)
         : method_{std::move(method)}
         , path_parts_{}
         , callback_{callback}
+        , mount_route_{mount_route}
     {
         initialize(path_template);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void route::initialize(std::string const& path_template)
     {
-        std::vector <std::string> parts;
-        boost::split(parts, path_template, boost::is_any_of("/"));
+        if (!mount_route_)
+        {
+            std::vector <std::string> parts;
+            boost::split(parts, path_template, boost::is_any_of("/"));
 
-        for (auto i = std::begin(parts) + 1, end = std::end(parts); i < end; ++i)
-            path_parts_.emplace_back(*i);
+            for (auto i = std::begin(parts) + 1, end = std::end(parts); i < end; ++i)
+                path_parts_.emplace_back(*i);
+        }
+        else
+        {
+            path_parts_.push_back(path_template);
+        }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    bool route::matches(request_header const& header) const
+    match_result route::matches(request_header const& header) const
     {
-        if (header.get_method() != method_)
-            return false;
-
-        std::deque <std::string> passed_parts;
-        auto path = header.get_path();
-        boost::split(passed_parts, path, boost::is_any_of("/"));
-        passed_parts.pop_front();
-
-        if (passed_parts.size() != path_parts_.size())
-            return false;
-
-        for (std::size_t i = 0u; i != path_parts_.size(); ++i)
+        if (!mount_route_)
         {
-            if (!path_parts_[i].matches(passed_parts[i]))
-                return false;
-        }
+            std::deque <std::string> passed_parts;
+            auto path = header.get_path();
+            boost::split(passed_parts, path, boost::is_any_of("/"));
+            passed_parts.pop_front();
 
-        return true;
+            if (passed_parts.size() != path_parts_.size())
+                return match_result::no_match;
+
+            for (std::size_t i = 0u; i != path_parts_.size(); ++i)
+            {
+                if (!path_parts_[i].matches(passed_parts[i]))
+                    return match_result::no_match;
+            }
+
+            if (header.get_method() != method_)
+                return match_result::path_match;
+            else
+                return match_result::full_match;
+        }
+        else
+        {
+            auto path = header.get_path();
+            auto part = path_parts_[0].get_part();
+            if (path.length() <= part.length())
+                return match_result::no_match;
+            for (std::string::size_type i = 0, end = part.length(); i != end; ++i)
+                if (part[i] != path[i])
+                    return match_result::no_match;
+
+            if (header.get_method() != method_)
+                return match_result::path_match;
+            else
+                return match_result::full_match;
+        }
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::unordered_map <std::string, std::string> route::get_path_parameters(std::string const& path) const
@@ -149,11 +176,16 @@ namespace attender
         case (mount_options::METHOD): \
         { \
             add_route({#METHOD, path_template, \
-            [CAPTURE_BOX](auto req, auto res) { \
+            [CAPTURE_BOX, cutFromFront, root_path](auto req, auto res) { \
             mount_response resp; \
             if (callback(req, &resp)) \
-            {
-
+            { \
+                auto path = req->path(); \
+                path.erase(0, cutFromFront + 1); \
+                if (root_path.back() != '/' && root_path.back() != '\\') \
+                    path = root_path + "/" + path; \
+                else \
+                    path = root_path + path;
 
         #define MOUNT_CASE_BEGIN(METHOD) \
             MOUNT_CASE_BEGIN_BASE(METHOD, callback)
@@ -162,45 +194,86 @@ namespace attender
             MOUNT_CASE_BEGIN_BASE(METHOD, WRAP(callback, CAPTURES))
 
         #define MOUNT_CASE_END() \
-            }}}); \
+            }}, true}); \
             break; \
         }
 
+        auto cutFromFront = path_template.length();
 
         for (auto const& method : supported_methods) switch (method)
         {
             MOUNT_CASE_BEGIN(GET)
             {
-                if (validate_path(req->path()))
-                    res->status(404).end();
+                if (!validate_path(req->path()))
+                    res->send_status(403);
+                else
+                {
+                    if (!res->send_file(path))
+                        res->send_status(404);
+                }
             }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(PUT)
             {
-                if (validate_path(req->path()))
-                    res->status(404).end();
+                if (!validate_path(req->path()))
+                    res->send_status(403);
+                else
+                {
+                    std::shared_ptr <std::ofstream> writer(new std::ofstream{path, std::ios_base::binary});
+                    if (!writer->good())
+                        res->send_status(412);
+                    else
+                        req->read_body(*writer, 0).then([writer, res](){
+                            res->send_status(204);
+                        }).except([](auto ec){
+
+                        });
+                }
             }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(POST)
             {
-                if (validate_path(req->path()))
-                    res->status(404).end();
+                if (!validate_path(req->path()))
+                    res->send_status(403);
+                else
+                {
+                    std::shared_ptr <std::ofstream> writer(new std::ofstream{path, std::ios_base::binary});
+                    if (!writer->good())
+                        res->send_status(412);
+                    else
+                        req->read_body(*writer, 0).then([writer, res](){
+                            res->send_status(204);
+                        }).except([](auto ec){
+
+                        });
+                }
             }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(DELETE)
             {
-                if (validate_path(req->path()))
-                    res->status(404).end();
+                if (!validate_path(req->path()))
+                    res->send_status(403);
+                else
+                {
+                    boost::filesystem::remove_all(path);
+                    res->send_status(204);
+                }
             }
             MOUNT_CASE_END()
             //------------------------------------------------------
             MOUNT_CASE_BEGIN(HEAD)
             {
-                if (validate_path(req->path()))
-                    res->status(404).end();
+                if (!validate_path(req->path()))
+                    res->send_status(403);
+                else
+                {
+                    std::ifstream reader(path, std::ios_base::binary);
+                    if (!reader.good())
+                        res->send_status(404);
+                }
             }
             MOUNT_CASE_END()
             //------------------------------------------------------
@@ -218,19 +291,24 @@ namespace attender
                 resp.try_set("Allow", allowed_methods)
                     .try_set("Server", "libattender");
                 resp.to_response(*res);
-                res->status(200).end();
+                res->send_status(200);
             }
             MOUNT_CASE_END()
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    boost::optional <route> request_router::find_route(request_header const& header) const
+    boost::optional <route> request_router::find_route(request_header const& header, match_result& match_level) const
     {
+        match_result best_result = match_result::no_match;
         for (auto const& i : routes_)
         {
-            if (i.matches(header))
+            match_level = i.matches(header);
+            if (match_level == match_result::path_match)
+                best_result = match_result::path_match;
+            else if (match_level == match_result::full_match)
                 return boost::optional <route> {i};
         }
+        match_level = best_result;
         return boost::none;
     }
 //#####################################################################################################################

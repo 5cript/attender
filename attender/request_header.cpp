@@ -89,6 +89,20 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void request_header::parse_url()
     {
+        std::string resUrl;
+        for (auto i = std::begin(url_), end = std::end(url_); i < end; ++i)
+        {
+            if (*i == '%' && i + 2 < end)
+            {
+                std::string buf{*(i+1), *(i+2)};
+                resUrl.push_back((char)std::stoi(buf, nullptr, 16));
+                i += 2;
+                continue;
+            }
+            resUrl.push_back(*i);
+        }
+        url_ = resUrl;
+
         auto query_pos = url_.find_last_of('?');
         if (query_pos != std::string::npos)
         {

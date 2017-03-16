@@ -7,7 +7,6 @@
 #include "response.hpp"
 
 #include <string>
-#include <iostream>
 #include <limits>
 
 namespace attender
@@ -27,7 +26,6 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     request_handler::~request_handler()
     {
-        std::cout << "request destroyed\n";
     }
 //---------------------------------------------------------------------------------------------------------------------
     void request_handler::initiate_header_read(parse_callback on_parse)
@@ -66,7 +64,7 @@ namespace attender
             {
                 on_parse_(boost::system::errc::make_error_code(boost::system::errc::invalid_argument));
             }
-            on_parse_ = {}; // frees shared_ptrs; TODO: FIXME?
+            // on_parse_ = {}; // frees shared_ptrs; TODO: FIXME?
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -80,7 +78,9 @@ namespace attender
         auto body_length = header_.get_field("Content-Length");
 
         if (!body_length)
+        {
             throw std::runtime_error("no content length field provided for reading body");
+        }
 
         // throws if Content-Length is not a number
         return std::atoll (body_length.get().c_str());
@@ -90,8 +90,9 @@ namespace attender
     {
         if (ec)
         {
+            if (ec != boost::asio::error::operation_aborted)
+                connection_->get_response_handler().end();
             on_finished_read_.error(ec);
-            connection_->get_response_handler().end();
             return;
         }
 
@@ -101,15 +102,15 @@ namespace attender
         // remaining limit = Min(Amount Read Overall, Maximum Read Allowed)
         request_parser::buffer_size_type remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), static_cast <int64_t> (0));
 
+        // write into the sink
+        sink_->write(connection_->get_read_buffer(), std::min(expected, remaining_limit));
+
         // limit reached?
         if (remaining_limit == 0ll)
         {
             on_finished_read_.fullfill();
             return;
         }
-
-        // write into the sink
-        sink_->write(connection_->get_read_buffer(), std::min(expected, remaining_limit));
 
         // remaining = ContentLength - Amount Read Overall  (after read)
         auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), static_cast <int64_t> (0));
@@ -162,6 +163,18 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     callback_wrapper& request_handler::body_read_start(size_type max)
     {
+        try
+        {
+            // Content-Length requirement test (411 otherwise)
+            get_content_length();
+        }
+        catch(...)
+        {
+            on_finished_read_.error(boost::asio::error::invalid_argument);
+            connection_->get_response_handler().send_status(411);
+            return on_finished_read_;
+        }
+
         // write what we already have read by parsing the header
         if (!parser_.is_buffer_empty())
         {
@@ -172,7 +185,7 @@ namespace attender
 
             // if header buffer exhausted & more content & max not reached.
             // = read more if more data is to be expected.
-            if (parser_.is_buffer_empty() && get_content_length() - from_header_buffer > 0 && from_header_buffer != max)
+            if (parser_.is_buffer_empty() && (get_content_length() - from_header_buffer) > 0 && from_header_buffer < max)
                 connection_->read();
             else
                 on_finished_read_.fullfill();
@@ -186,9 +199,6 @@ namespace attender
             else
                 connection_->read();
         }
-
-        //std::cout << get_content_length() << "\n";
-        //std::cout << body_begin.size() << "\n";
 
         return on_finished_read_;
     }
