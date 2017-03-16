@@ -53,7 +53,7 @@ namespace attender
     template <typename SocketT>
     using accept_callback = std::function <bool(SocketT const& /* sock */)>;
 
-    constexpr auto nop = []{};
+    /*constexpr*/ auto nop = []{}; // constexpr lambdas are C++17
 
     using size_type = std::size_t;
 }

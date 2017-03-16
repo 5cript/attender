@@ -251,7 +251,7 @@ namespace attender
         /**
          *  Return the associated socket.
          */
-        boost::asio::ip::tcp::socket::lowest_layer_type* get_socket()
+        boost::asio::ip::tcp::socket::lowest_layer_type* get_socket() override
         {
             return &internal::get_socket_layer(*socket_);
         }

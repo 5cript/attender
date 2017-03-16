@@ -8,9 +8,9 @@ function(add_cxx_compiler_flag FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAG}" PARENT_SCOPE)
 endfunction()
 
-IF (NOT DEFINED CMAKE_BUILD_TYPE)
+if (NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
-ENDIF()
+endif()
 
 # Compiler Options
 add_cxx_compiler_flag("-std=c++14")
@@ -39,14 +39,16 @@ find_library(LSSL crypto)
 set(LIBS "${LBOOST_SYSTEM} ${LBOOST_FILE_SYSTEM} ${LSSL} ${LCRYPTO}")
 
 # MS SOCK
-IF (WIN32)
+if (WIN32)
 	find_library(LWS2_32 ws2_32)
 	find_library(LMSWSOCK mswsock)
 	
 	set(LIBS "${LIBS} ${LWS2_32} ${LMSWSOCK}")
-ELSE()
-ENDIF()
-
-MESSAGE(${LIBS})
+	
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		target_compile_definitions(attender PRIVATE BOOST_USE_WINDOWS_H=1)
+	endif()
+else()
+endif()
 
 target_link_libraries(attender PRIVATE "${LIBS}")
