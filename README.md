@@ -20,6 +20,7 @@ A windows/linux RESTful webservice server for professionals built using boost::a
 - JSON / XML support (planed)
 - keep alive
 - custom error code pages.
+- HTTP/2
 
 ## Documentation
 **Doxygen documentation is available in the wiki.**
@@ -199,7 +200,7 @@ int main()
                 std::cout << "all done!\n";
                 std::cout << *monster << "\n";
                 // end with 204 OK
-                res->status(204)->end();
+                res->status(204).end();
             }
         ).except(
             [extender{monster}](boost::system::error_code ec)
