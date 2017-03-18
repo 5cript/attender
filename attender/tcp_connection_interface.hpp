@@ -37,6 +37,7 @@ namespace attender
         // auxiliary info
         virtual std::string get_remote_address() const = 0;
         virtual unsigned short get_remote_port() const = 0;
+        virtual bool stopped() const = 0;
 
         // internal control
         virtual tcp_server_interface* get_parent() = 0;

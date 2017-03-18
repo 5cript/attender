@@ -364,7 +364,7 @@ namespace attender
         /**
         *  Returns wether the socket is open or not.
         */
-        bool stopped() const
+        bool stopped() const override
         {
             return !internal::get_socket_layer(*socket_).is_open();
         }
