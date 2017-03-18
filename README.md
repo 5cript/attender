@@ -20,6 +20,7 @@ A windows/linux RESTful webservice server for professionals built using boost::a
 - JSON / XML support (planed)
 - keep alive
 - custom error code pages.
+- HTTP/2
 
 ## Documentation
 **Doxygen documentation is available in the wiki.**
