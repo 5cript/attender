@@ -200,7 +200,7 @@ int main()
                 std::cout << "all done!\n";
                 std::cout << *monster << "\n";
                 // end with 204 OK
-                res->status(204)->end();
+                res->status(204).end();
             }
         ).except(
             [extender{monster}](boost::system::error_code ec)
