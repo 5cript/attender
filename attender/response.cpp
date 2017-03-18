@@ -143,7 +143,7 @@ namespace attender
 
         if (header_.get_code() == 204 && size > 0)
             status(200);
-        else if (header_.get_code() == 200 && size == 0)
+        else if (header_.get_code() == 200 && static_cast <size_type> (size) == 0u)
             status(204);
 
         write(this, std::make_shared <stream_keeper> (body), on_finish);

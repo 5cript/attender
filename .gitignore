@@ -14,3 +14,6 @@ doc/node_modules/*
 doc/.vscode/*
 doc/md/*
 build/*
+x64/*
+.vs/*
+packages/*
