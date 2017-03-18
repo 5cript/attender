@@ -27,8 +27,7 @@ A windows/linux RESTful webservice server for professionals built using boost::a
 https://github.com/5cript/attender/wiki
 
 ## Dependencies and Requirements
-- C++14 compliant compiler (clang or g++ on linux or msys2. MSVC will most likely not compile attender)
-
+- C++14 compliant compiler (clang++, g++, MSVC (VC2017))
 - boost asio
 - boost filesystem
 - openssl
