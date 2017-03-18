@@ -62,7 +62,8 @@ namespace attender
             }
             catch (std::exception const& exc)
             {
-                on_parse_(boost::system::errc::make_error_code(boost::system::errc::invalid_argument));
+                connection_->get_response_handler().send_status(400);
+                // on_parse_(boost::system::errc::make_error_code(boost::system::errc::invalid_argument));
             }
             // on_parse_ = {}; // frees shared_ptrs; TODO: FIXME?
         }
