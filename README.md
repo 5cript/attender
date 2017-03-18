@@ -26,17 +26,18 @@ A windows/linux RESTful webservice server for professionals built using boost::a
 https://github.com/5cript/attender/wiki
 
 ## Dependencies and Requirements
-- C++14 compliant compiler
+- C++14 compliant compiler (clang or g++ on linux or msys2. MSVC will most likely not compile attender)
 
 - boost asio
 - boost filesystem
 - openssl
 
 ## How to build
-This project provides a cmake file.
+This project provides a cmake file (for a static library).
 - mkdir build
 - cd build
 - cmake ..
+- make
 
 ## Basics
 ### expressjs inspiration
@@ -51,6 +52,11 @@ You can use io_context/thread_pooler.hpp as an example.
 ### ssl_context_interface
 SSL/TLS servers need a ssl_context. Due to security implications, no guarantees are made for the provided "ssl_example_context" and I highly suggest for you to implement it on your own, if security is highly critical.
 The provided implementation shall serve as an example, but is fully functional for server only certificates.
+
+### callbacks
+Almost all callbacks to registered routings provide a request_handler and a response_handler. 
+These callbacks are called through the io_service run method and do not provide thread safety to the outside of the callback.
+The end of any successful request has to be a call to some send function, or to the end function of the response_handler, otherwise there will be no termination of request -> the client will "hang".
 
 ### request_handler
 The request_handler, abbreviated req in all the examples, is responsible for doing everything on the request. It can read the request header and the content of the request. 
@@ -67,7 +73,7 @@ which keeps all sessions in memory. But this has the drawback, that sessions do 
 ### How to create a server
 The following code example shows how to create a server and runs it on port 80.
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 #include <iostream>
 
@@ -97,7 +103,7 @@ int main()
 
 ### How to create a secure server
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 #include <openssl/err.h>
 
@@ -148,7 +154,7 @@ int main()
 
 ### How to add routings
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 #include <iostream>
 
@@ -165,13 +171,19 @@ int main()
          res->send_status(204);
     });
     
+    // this route shows regex capabilities and path parameters.
+    server.get("/\\w*/:param1", [](auto req, auto res) {
+        std::cout << req->param("param1") << "\n";
+        res->redirect("http://www.google.com:80", 301).end();
+    });
+    
     server.start(80);
 }
 ```
 
 ### How to read
 ```C++
-#include "attender.hpp"
+#include <attender/attender.hpp>
 
 int main() 
 {
@@ -180,7 +192,7 @@ int main()
     server.post("/read_test", [](auto req, auto res) {
         // The buffer needs to keep alive. For this example a shared pointer is used.
         // But this is not required!
-        std::shared_ptr <std::string> monster {new std::string};
+        auto monster = std::make_shared <std::string>();
         req->read_body(*monster).then(
             [monster{monster}, res]()
             {
@@ -218,7 +230,7 @@ The callback in this case does not do any response related stuff, but instead is
 The return value of the callback determines whether or not the request shall proceed.
 ```C++
 server.mount("/home/username", "/mnt", [](auto req, auto mres) {
-    if (/*...*/) // I do not like this request! STOP THIS AT ONCE! (will return 404)
+    if (/*...*/) // I do not like this request! STOP THIS AT ONCE! (will return 403)
         return false;
     else // you may proceed
         return true;
@@ -229,7 +241,7 @@ server.mount("/home/username", "/mnt", [](auto req, auto mres) {
 ### Sessions
 This is example shows how to get, create and delete a session.
 ```C++
-#include <attender.hpp>
+#include <attender/attender.hpp>
 
 int main()
 {

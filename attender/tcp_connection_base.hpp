@@ -251,7 +251,7 @@ namespace attender
         /**
          *  Return the associated socket.
          */
-        boost::asio::ip::tcp::socket::lowest_layer_type* get_socket()
+        boost::asio::ip::tcp::socket::lowest_layer_type* get_socket() override
         {
             return &internal::get_socket_layer(*socket_);
         }
@@ -364,7 +364,7 @@ namespace attender
         /**
         *  Returns wether the socket is open or not.
         */
-        bool stopped() const
+        bool stopped() const override
         {
             return !internal::get_socket_layer(*socket_).is_open();
         }

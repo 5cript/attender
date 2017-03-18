@@ -18,6 +18,14 @@ namespace attender
     public:
         ~connection_manager();
 
+        /**
+         *  Add a connection to the manager.
+         *
+         *  @param server The owning server (which accepted the connection).
+         *  @param socket The socket that is associated with the connection.
+         *
+         *  @return The new connection object.
+         */
         template <typename T, typename SocketT>
         tcp_connection_interface* create(tcp_server_interface* server, SocketT* socket)
         {
@@ -29,6 +37,14 @@ namespace attender
             return connection;
         }
 
+        /**
+         *  Add a connection to the manager.
+         *
+         *  @param server The owning server (which accepted the connection).
+         *  @param socket The socket that is associated with the connection.
+         *
+         *  @return The new connection object.
+         */
         template <typename T, typename SocketT>
         tcp_connection_interface* create(tcp_server_interface* server, SocketT&& socket)
         {
@@ -40,9 +56,22 @@ namespace attender
             return connection;
         }
 
+        /**
+         *  Remove and terminate all connections.
+         */
         void clear();
 
+        /**
+         *  Remove and terminate the given connection.
+         *
+         *  @param connection The connection to remove.
+         */
         void remove(tcp_connection_interface* connection);
+
+        /**
+         *  @return Returns the amount of active connections.
+         */
+        std::size_t count() const;
 
     private:
         std::unordered_set <tcp_connection_interface*> connections_;
