@@ -114,7 +114,7 @@ namespace attender
         {
             auto path = header.get_path();
             auto part = path_parts_[0].get_part();
-            if (path.length() <= part.length())
+            if (path.length() < part.length())
                 return match_result::no_match;
             for (std::string::size_type i = 0, end = part.length(); i != end; ++i)
                 if (part[i] != path[i])
@@ -181,8 +181,8 @@ namespace attender
             if (callback(req, &resp)) \
             { \
                 auto path = req->path(); \
-                path.erase(0, cutFromFront + 1); \
-                if (root_path.back() != '/' && root_path.back() != '\\') \
+                path.erase(0, cutFromFront); \
+                if (root_path.back() != '/' && root_path.back() != '\\' && path.front() != '/') \
                     path = root_path + "/" + path; \
                 else \
                     path = root_path + path;
