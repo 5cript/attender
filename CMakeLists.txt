@@ -25,7 +25,7 @@ add_cxx_compiler_flag("-Wstrict-aliasing")
 add_cxx_compiler_flag("-O3")
 
 # Add files
-file(GLOB sources "attender/*.cpp")
+file(GLOB_RECURSE sources "attender/*.cpp")
 
 # Add library
 add_library(attender STATIC ${sources})
@@ -34,9 +34,9 @@ find_library(LBOOST_SYSTEM boost_system)
 find_library(LBOOST_FILE_SYSTEM boost_filesystem)
 find_library(LATOMIC atomic)
 find_library(LSSL ssl)
-find_library(LSSL crypto)
+find_library(LCRYPTO crypto)
 
-set(LIBS "${LBOOST_SYSTEM} ${LBOOST_FILE_SYSTEM} ${LSSL} ${LCRYPTO}")
+set(LIBS "${LBOOST_SYSTEM} ${LBOOST_FILE_SYSTEM} ${LATOMIC} ${LSSL} ${LCRYPTO}")
 
 # MS SOCK
 if (WIN32)
