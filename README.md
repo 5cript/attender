@@ -89,7 +89,7 @@ int main()
     managed_io_context <thread_pooler> context;
 
     // create a server
-    tcp_server server(io_ctx.get_io_service(),
+    tcp_server server(context.get_io_service(),
         [](auto* connection, auto const& ec, auto const& exc) {
             // some error occured. (this is not thread safe)
             // You MUST check the error code here, because some codes mean, that the connection went kaputt!
