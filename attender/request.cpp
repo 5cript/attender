@@ -46,11 +46,24 @@ namespace attender
     {
         if (ec)
         {
-            on_parse_(ec);
+            on_parse_(ec, {});
             return;
         }
 
-        parser_.feed(connection_);
+        try
+        {
+            parser_.feed(connection_);
+        }
+        catch (std::bad_alloc const& exc)
+        {
+            on_parse_(boost::system::errc::make_error_code(boost::system::errc::not_enough_memory), exc);
+            return;
+        }
+        catch (std::exception const& exc)
+        {
+            on_parse_(boost::system::errc::make_error_code(boost::system::errc::protocol_error), exc);
+            return;
+        }
 
         // header finished
         if (parser_.finished())
@@ -58,7 +71,7 @@ namespace attender
             try
             {
                 header_ = parser_.get_header();
-                on_parse_({});
+                on_parse_({}, {});
             }
             catch (std::exception const& exc)
             {

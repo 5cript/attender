@@ -41,7 +41,7 @@ namespace attender
                     static_cast <tcp_connection*> (connection)->attach_lifetime_binder(new lifetime_binding (req, res));
 
                     req->initiate_header_read(
-                        [this, res, req, connection](boost::system::error_code ec)
+                        [this, res, req, connection](boost::system::error_code ec, std::exception const& exc)
                         {
                             // socket closed
                             if (ec.value() == 2)
@@ -52,8 +52,11 @@ namespace attender
 
                             if (ec)
                             {
-                                on_error_(connection, ec);
-                                connections_.remove(connection);
+                                on_error_(connection, ec, exc);
+                                if (ec.value() == boost::system::errc::protocol_error)
+                                    connection->get_response_handler().send_status(400);
+                                else
+                                    connections_.remove(connection);
                                 return;
                             }
 

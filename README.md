@@ -89,11 +89,16 @@ int main()
     managed_io_context <thread_pooler> context;
 
     // create a server
-    tcp_server server(context.get_io_service(),
-        [](auto*, auto const& exc) {
+    tcp_server server(io_ctx.get_io_service(),
+        [](auto* connection, auto const& ec, auto const& exc) {
             // some error occured. (this is not thread safe)
-            // for now, the first parameter may not be used safely, but represents a connection object.
-            std::cerr << exc << "\n"; 
+            // You MUST check the error code here, because some codes mean, that the connection went kaputt!
+            // Accessing the connection might be invalid then / crash you.
+            if (ec.value() == boost::system::errc::protocol_error)
+            {
+                std::cout << connection->get_remote_address() << ":" << connection->get_remote_port() << "\n";
+            }
+            std::cerr << ec << " " << exc.what() << "\n";
         }
     );
 
@@ -129,7 +134,7 @@ int main()
         std::unique_ptr <attender::ssl_context_interface> {new ssl_example_context("key.pem", "cert.pem")},
                              
         // An error callback. (here with OpenSSL demangling)
-        [](auto* connection, auto const& ec) {
+        [](auto* connection, auto const& ec, auto const& exc) {
             std::cerr << "error: " << ec << "\n";
 
             std::string err = ec.message();
