@@ -65,7 +65,7 @@ namespace attender
                                         // some other error
                                         if (ec)
                                         {
-                                            on_error_(connection, ec, {});
+                                            on_error_(connection, ec, exc);
                                             if (ec.value() == boost::system::errc::protocol_error)
                                                 connection->get_response_handler().send_status(400);
                                             else
