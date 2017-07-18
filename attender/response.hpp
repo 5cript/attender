@@ -118,6 +118,7 @@ namespace attender
          *  Content-Type will be deduced from the filename if possible, "application/octet-stream" otherwise.
          *
          *  @param fileName A file to open in binary read mode and send.
+         *  @return Returns false if the file could not be opened. The connection will not be closed and nothing will be sent.
          */
         bool send_file(std::string const& fileName);
 
