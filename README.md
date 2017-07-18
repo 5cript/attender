@@ -40,7 +40,7 @@ This project provides a cmake file (for a static library).
 - make
 
 There also is a .sln file for Visual Studio users and MSVC. Version 2017 is required for sufficient language support.
-When using this library, you potentially have to link ssl, boost_system, boost_filesystem, ws2_32, pthread, mswsock. Depends on your setup and usage.
+When using this library, you have to link **ssl, boost_system, boost_filesystem, ws2_32, pthread, mswsock, atomic.** Depends on your setup and usage.
 
 ## Basics
 ### expressjs inspiration
