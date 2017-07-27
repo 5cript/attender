@@ -1,4 +1,4 @@
-# attender
+# attender ![Travis CI](https://travis-ci.org/5cript/attender.svg?branch=master)
 A windows/linux RESTful webservice server for professionals built using boost::asio.
 
 1. [Features](https://github.com/5cript/attender#features)
