@@ -43,10 +43,27 @@ namespace attender
          */
         mount_response& try_set(std::string const& field, std::string const& value);
 
+        /**
+         *  Sets the response code.
+         *
+         *  @param code A response code 1xx, 2xx, 3xx, 4xx or 5xx
+         *
+         *  @return *this for chaining.
+         */
+        mount_response& status(int status);
+
+        /**
+         *  Gets the response code.
+         *
+         *  @return A response code 1xx, 2xx, 3xx, 4xx or 5xx
+         */
+        int get_status() const;
+
         void to_response(response_handler& res) const;
 
     private:
         response_header header_;
+        int status_ = 0;
     };
 
     bool validate_path(std::string const& str);

@@ -34,6 +34,8 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     std::unordered_map <std::string, std::string> cookie::parse_cookies(std::string const& cookie_header_entry)
     {
+        using namespace std::string_literals;
+
         if (cookie_header_entry.empty())
             throw std::runtime_error("cookie value is empty");
 

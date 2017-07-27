@@ -194,7 +194,15 @@ namespace attender
             MOUNT_CASE_BEGIN_BASE(METHOD, WRAP(callback, CAPTURES))
 
         #define MOUNT_CASE_END() \
-            }}, true}); \
+            } \
+            else \
+            { \
+                auto status = resp.get_status(); \
+                if (status == 0) \
+                    status = 403; \
+                res->send_status(status); \
+            } \
+            }, true}); \
             break; \
         }
 
@@ -222,7 +230,7 @@ namespace attender
                 {
                     std::shared_ptr <std::ofstream> writer(new std::ofstream{path, std::ios_base::binary});
                     if (!writer->good())
-                        res->send_status(412);
+                        res->status(400).send(path + " not openable");
                     else
                         req->read_body(*writer, 0).then([writer, res](){
                             res->send_status(204);
@@ -241,7 +249,7 @@ namespace attender
                 {
                     std::shared_ptr <std::ofstream> writer(new std::ofstream{path, std::ios_base::binary});
                     if (!writer->good())
-                        res->send_status(412);
+                        res->status(400).send(path + " not openable");
                     else
                         req->read_body(*writer, 0).then([writer, res](){
                             res->send_status(204);
