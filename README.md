@@ -128,7 +128,7 @@ int main()
     // create a server
     tcp_secure_server server(                     
         // boost::asio::io_service
-        io_ctx.get_io_service(),
+        context.get_io_service(),
                              
         // An SSL context
         std::unique_ptr <attender::ssl_context_interface> {new ssl_example_context("key.pem", "cert.pem")},
@@ -250,6 +250,9 @@ server.mount("/home/username", "/mnt", [](auto req, auto mres) {
 This is example shows how to get, create and delete a session.
 ```C++
 #include <attender/attender.hpp>
+#include <attender/attender/session/session_manager.hpp>
+#include <attender/attender/session/memory_session_storage.hpp>
+#include <attender/attender/session/uuid_session_cookie_generator.hpp>
 
 int main()
 {
