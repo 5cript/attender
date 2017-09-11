@@ -104,9 +104,9 @@ namespace attender
     {
         if (ec)
         {
+            on_finished_read_.error(ec);
             if (ec != boost::asio::error::operation_aborted)
                 connection_->get_response_handler().end();
-            on_finished_read_.error(ec);
             return;
         }
 
@@ -114,10 +114,8 @@ namespace attender
         auto expected = get_content_length() - sink_->get_total_bytes_written();
 
         // remaining limit = Min(Amount Read Overall, Maximum Read Allowed)
-        request_parser::buffer_size_type remaining_limit = std::min(static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written()), static_cast <int64_t> (0));
-
-        // write into the sink
-        sink_->write(connection_->get_read_buffer(), std::min(expected, remaining_limit));
+        int64_t remaining_limit = static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written());
+        if (remaining_limit < 0) remaining_limit = 0; // should never happen.
 
         // limit reached?
         if (remaining_limit == 0ll)
@@ -125,6 +123,9 @@ namespace attender
             on_finished_read_.fullfill();
             return;
         }
+
+        // write into the sink
+        sink_->write(connection_->get_read_buffer(), std::min(expected, static_cast <request_parser::buffer_size_type> (remaining_limit)));
 
         // remaining = ContentLength - Amount Read Overall  (after read)
         auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), static_cast <int64_t> (0));

@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <deque>
 #include <fstream>
+#include <iostream>
 
 namespace attender
 {
@@ -235,7 +236,7 @@ namespace attender
                         req->read_body(*writer, 0).then([writer, res](){
                             res->send_status(204);
                         }).except([](auto){
-
+                            
                         });
                 }
             }
