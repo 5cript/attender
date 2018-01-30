@@ -87,30 +87,34 @@ namespace attender
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void request_header::parse_url()
+    std::string request_header::decode_url(std::string const& encoded)
     {
-        std::string resUrl;
-        for (auto i = std::begin(url_), end = std::end(url_); i < end; ++i)
+        std::string decoded;
+        for (auto i = std::begin(encoded), end = std::end(encoded); i < end; ++i)
         {
             if (*i == '%' && i + 2 < end)
             {
                 std::string buf{*(i+1), *(i+2)};
-                resUrl.push_back((char)std::stoi(buf, nullptr, 16));
+                decoded.push_back((char)std::stoi(buf, nullptr, 16));
                 i += 2;
                 continue;
             }
-            resUrl.push_back(*i);
+            decoded.push_back(*i);
         }
-        url_ = resUrl;
-
+        return decoded;
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void request_header::parse_url()
+    {
         auto query_pos = url_.find_last_of('?');
         if (query_pos != std::string::npos)
         {
-            parse_query(url_.substr(query_pos + 1, url_.length() - query_pos - 1));
-            path_ = url_.substr(0, query_pos);
+            auto queryPart = decode_url(url_.substr(query_pos + 1, url_.length() - query_pos - 1));
+            parse_query(queryPart);
+            path_ = decode_url(url_.substr(0, query_pos));
         }
         else
-            path_ = url_;
+            path_ = decode_url(url_);
     }
 //#####################################################################################################################
 }

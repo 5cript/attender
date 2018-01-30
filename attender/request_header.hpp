@@ -46,6 +46,7 @@ namespace attender
     private:
         void parse_query(std::string const& query);
         void parse_url();
+        std::string decode_url(std::string const& encoded);
 
     private:
         std::string method_;
