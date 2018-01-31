@@ -81,9 +81,9 @@ namespace attender
         {
             auto pos = pair.find('=');
             if (pos == std::string::npos)
-                throw std::invalid_argument("invalid query format");
-
-            query_[pair.substr(0, pos)] = pair.substr(pos + 1, pair.length() - pos - 1);
+                query_[pair] = "";
+            else
+                query_[pair.substr(0, pos)] = pair.substr(pos + 1, pair.length() - pos - 1);
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
