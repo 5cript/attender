@@ -76,6 +76,11 @@ namespace attender
         bool is_buffer_empty() const;
 
         /**
+         *  Rewind the header parser to header entries. Required for 100-continue.
+         */
+        void rewind();
+
+        /**
          *  @param key A header entry key, such as "Content-Length"
          *
          *  @return Returns the value associated with the key.

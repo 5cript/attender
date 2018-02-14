@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tcp_fwd.hpp"
 #include "cookie.hpp"
 
 #include <boost/optional.hpp>
@@ -23,12 +24,16 @@ namespace attender
     class request_header
     {
     public:
+        friend request_handler;
+
+    public:
         std::string get_path() const;
         std::string get_method() const;
         std::string get_url() const;
         std::string get_protocol() const;
         std::string get_version() const;
         std::string get_fragment() const;
+        std::string to_string() const;
 
         boost::optional <std::string> get_field(std::string const& key) const;
         boost::optional <std::string> get_query(std::string const& key) const;

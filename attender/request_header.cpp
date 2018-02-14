@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <regex>
+#include <sstream>
 #include <iostream>
 
 namespace attender
@@ -70,6 +71,16 @@ namespace attender
         , cookies_{intermediate.cookies}
     {
         parse_url();
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::string request_header::to_string() const
+    {
+        std::stringstream sstr;
+        sstr << method_ << ' ' << url_ << ' ' << protocol_ << '/' << version_ << "\r\n";
+        for (auto const& i : fields_)
+            sstr << i.first << ": " << i.second << "\r\n";
+        sstr << "\r\n";
+        return sstr.str();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void request_header::parse_query(std::string const& query)

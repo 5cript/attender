@@ -234,9 +234,9 @@ namespace attender
                         res->status(400).send(path + " not openable");
                     else
                         req->read_body(*writer, 0).then([writer, res](){
-                            res->send_status(204);
-                        }).except([](auto){
-                            
+                            res->status(204).end();
+                        }).except([](auto err){
+                            std::cout << err.message() << "\n";
                         });
                 }
             }

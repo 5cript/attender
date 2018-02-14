@@ -71,7 +71,16 @@ namespace attender
             try
             {
                 header_ = parser_.get_header();
-                on_parse_({}, {});
+
+                auto expect = header_.get_field("Expect");
+                if (expect && expect.get() == "100-continue")
+                {
+                    connection_->write("HTTP/1.1 100 Continue\r\n\r\n", [this](boost::system::error_code ec){
+                        on_parse_({}, {});
+                    });
+                }
+                else
+                    on_parse_({}, {});
             }
             catch (std::exception const& exc)
             {
