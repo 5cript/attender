@@ -76,7 +76,7 @@ namespace attender
                 if (expect && expect.get() == "100-continue")
                 {
                     connection_->write("HTTP/1.1 100 Continue\r\n\r\n", [this](boost::system::error_code ec){
-                        on_parse_({}, {});
+                        on_parse_(ec, {});
                     });
                 }
                 else
