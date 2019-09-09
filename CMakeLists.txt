@@ -30,25 +30,26 @@ file(GLOB_RECURSE sources "attender/*.cpp")
 # Add library
 add_library(attender STATIC ${sources})
 
-find_library(LBOOST_SYSTEM boost_system)
-find_library(LBOOST_FILE_SYSTEM boost_filesystem)
-find_library(LATOMIC atomic)
+find_package(Boost REQUIRED COMPONENTS
+	system
+	filesystem
+)
+
 find_library(LSSL ssl)
 find_library(LCRYPTO crypto)
+find_library(LCRYPTOPP cryptopp)
 
-set(LIBS "${LBOOST_SYSTEM} ${LBOOST_FILE_SYSTEM} ${LATOMIC} ${LSSL} ${LCRYPTO}")
+target_link_libraries(attender PRIVATE Boost::filesystem Boost::system ${LSSL}  ${LCRYPTOPP} ${LCRYPTO})
 
 # MS SOCK
 if (WIN32)
 	find_library(LWS2_32 ws2_32)
 	find_library(LMSWSOCK mswsock)
 	
-	set(LIBS "${LIBS} ${LWS2_32} ${LMSWSOCK}")
+	target_link_libraries(attender PRIVATE  ${LWS2_32} ${LMSWSOCK} ${BCRYPT})
 	
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		target_compile_definitions(attender PRIVATE BOOST_USE_WINDOWS_H=1)
 	endif()
 else()
 endif()
-
-target_link_libraries(attender PRIVATE "${LIBS}")

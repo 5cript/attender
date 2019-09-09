@@ -51,7 +51,7 @@ namespace attender
             , write_buffer_{}
             , read_callback_inst_{}
             , bytes_ready_{0}
-            , read_timeout_timer_{socket_->get_io_service()}
+            , read_timeout_timer_{socket_->get_executor()}
             , closed_{false}
             , kept_alive_{nullptr}
         {
