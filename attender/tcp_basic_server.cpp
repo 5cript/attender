@@ -33,9 +33,11 @@ namespace attender
         stop();
 
         boost::asio::ip::tcp::resolver resolver{*service_};
-        boost::asio::ip::v6_only option(false);
 
+#ifdef WINDOWS
+        boost::asio::ip::v6_only option(false);
         acceptor_.set_option(option);
+#endif
 
         local_endpoint_ = *resolver.resolve(host, port);
         acceptor_.open(local_endpoint_.protocol());
