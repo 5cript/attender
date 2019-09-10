@@ -15,7 +15,7 @@ namespace attender
         virtual boost::asio::ssl::context* get_ssl_context() = 0;
         virtual ~ssl_context_interface()
         {
-            std::cout << "context deleted\n";
+            //std::cout << "context deleted\n";
         }
     };
 }

@@ -155,7 +155,7 @@ namespace attender
     void request_handler::initialize_read(request_parser::buffer_size_type& max)
     {
         //if (max == 0)
-        //    max = std::numeric_limits <std::decay_t<decltype(max)>>::max();
+            //max = std::numeric_limits <std::decay_t<decltype(max)>>::max();
 
         // rearrange the callback for body reading.
         connection_->set_read_callback([this](boost::system::error_code ec) {
@@ -209,7 +209,9 @@ namespace attender
         // write what we already have read by parsing the header
         if (!parser_.is_buffer_empty())
         {
-            auto from_header_buffer = std::min(max, static_cast <size_type> (parser_.get_buffer().length()));
+            size_type from_header_buffer = static_cast <size_type> (parser_.get_buffer().length());
+            if (max != 0)
+                from_header_buffer = std::min(max, from_header_buffer);
 
             auto&& body_begin = parser_.read_front(from_header_buffer); // start of body
             sink_->write(body_begin.c_str(), from_header_buffer);

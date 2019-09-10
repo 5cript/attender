@@ -150,14 +150,14 @@ namespace attender
         return callback_;
     }
 //#####################################################################################################################
-    void request_router::add_route(std::string const& method, std::string const& path_template, connected_callback const& callback)
+    void request_router::add_route(std::string const& method, std::string const& path_template, connected_callback const& callback, int priority)
     {
-        add_route({method, path_template, callback});
+        add_route({method, path_template, callback}, priority);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void request_router::add_route(route const& r)
+    void request_router::add_route(route const& r, int priority)
     {
-        routes_.push_back(r);
+        routes_.emplace(std::make_pair(priority, r));
     }
 //---------------------------------------------------------------------------------------------------------------------
     void request_router::mount(
@@ -203,7 +203,7 @@ namespace attender
                     status = 403; \
                 res->send_status(status); \
             } \
-            }, true}); \
+            }, true}, -100); \
             break; \
         }
 
@@ -236,7 +236,7 @@ namespace attender
                         req->read_body(*writer, 0).then([writer, res](){
                             res->status(204).end();
                         }).except([](auto err){
-                            std::cout << err.message() << "\n";
+                            //std::cout << err.message() << "\n";
                         });
                 }
             }
@@ -309,7 +309,7 @@ namespace attender
     boost::optional <route> request_router::find_route(request_header const& header, match_result& match_level) const
     {
         match_result best_result = match_result::no_match;
-        for (auto const& i : routes_)
+        for (auto const& [prio, i] : routes_)
         {
             match_level = i.matches(header);
             if (match_level == match_result::path_match)

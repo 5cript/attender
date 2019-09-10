@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 #include <boost/optional.hpp>
 
@@ -61,8 +62,8 @@ namespace attender
     class request_router
     {
     public:
-        void add_route(std::string const& method, std::string const& path_template, connected_callback const& callback);
-        void add_route(route const& r);
+        void add_route(std::string const& method, std::string const& path_template, connected_callback const& callback, int priority = 0);
+        void add_route(route const& r, int priority = 0);
         void mount(
             std::string const& root_path,
             std::string const& path_template,
@@ -73,7 +74,7 @@ namespace attender
         boost::optional <route> find_route(request_header const& header, match_result& match_level) const;
 
     private:
-        std::vector <route> routes_;
+        std::multimap <int, route, std::greater<int>> routes_;
     };
 //#####################################################################################################################
 }

@@ -22,7 +22,7 @@ namespace attender
         explicit tcp_secure_connection(tcp_server_interface* parent, ssl_socket_type* socket);
         ~tcp_secure_connection()
         {
-            std::cout << "secure connection died\n";
+            //std::cout << "secure connection died\n";
         }
 
         void shutdown() override;
