@@ -33,6 +33,7 @@ namespace attender
         {
         };
 
+#ifdef WINDOWS
         template <typename T>
         struct get_io_context <T, std::enable_if_t <!std::is_same_v <T, boost::asio::ip::tcp::socket>>>
         {
@@ -51,6 +52,26 @@ namespace attender
                 return sock->get_executor();
             }
         };
+#else
+        template <typename T>
+        struct get_io_context <T, std::enable_if_t <!std::is_same_v <T, boost::asio::ip::tcp::socket>>>
+        {
+            static auto ctx(T* sock) -> decltype(auto)
+            {
+                return sock->lowest_layer().get_executor().context();
+            }
+        };
+
+        template <>
+        struct get_io_context <boost::asio::ip::tcp::socket>
+        {
+            using U = boost::asio::ip::tcp::socket;
+            static auto ctx(U* sock) -> decltype(auto)
+            {
+                return sock->get_executor().context();
+            }
+        };
+#endif
     }
 
     /**
