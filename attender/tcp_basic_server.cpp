@@ -34,11 +34,6 @@ namespace attender
 
         boost::asio::ip::tcp::resolver resolver{*service_};
 
-#ifdef WINDOWS
-        boost::asio::ip::v6_only option(false);
-        acceptor_.set_option(option);
-#endif
-
         local_endpoint_ = *resolver.resolve(host, port);
         acceptor_.open(local_endpoint_.protocol());
         acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
