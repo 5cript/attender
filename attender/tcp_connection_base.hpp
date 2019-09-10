@@ -27,6 +27,30 @@ namespace attender
         {
             return sock.lowest_layer();
         }
+
+        template <typename T, typename U = void>
+        struct get_io_context
+        {
+        };
+
+        template <typename T>
+        struct get_io_context <T, std::enable_if_t <!std::is_same_v <T, boost::asio::ip::tcp::socket>>>
+        {
+            static auto ctx(T* sock) -> decltype(auto)
+            {
+                return sock->lowest_layer().get_executor();
+            }
+        };
+
+        template <>
+        struct get_io_context <boost::asio::ip::tcp::socket>
+        {
+            using U = boost::asio::ip::tcp::socket;
+            static auto ctx(U* sock) -> decltype(auto)
+            {
+                return sock->get_executor();
+            }
+        };
     }
 
     /**
@@ -44,6 +68,7 @@ namespace attender
         using socket_type = SocketT;
 
     public:
+
         explicit tcp_connection_base(tcp_server_interface* parent, SocketT* socket)
             : parent_(parent)
             , socket_{socket}
@@ -51,7 +76,7 @@ namespace attender
             , write_buffer_{}
             , read_callback_inst_{}
             , bytes_ready_{0}
-            , read_timeout_timer_{socket_->get_executor()}
+            , read_timeout_timer_{internal::get_io_context <SocketT>::ctx(socket)}
             , closed_{false}
             , kept_alive_{nullptr}
         {
