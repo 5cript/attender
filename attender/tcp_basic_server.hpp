@@ -37,9 +37,9 @@ namespace attender
          *  Starts the server on the port (0-65536 or "http", abides boost asio behaviour) on the interface "host".
          *
          *  @param port The port to bind to.
-         *  @param host The target interface. "0.0.0.0" is the default value meaning, that it shall bind on any interface.
+         *  @param host The target interface. "0.0.0.0" is the default value for ipv4 and "::" for ipv6.
          */
-        void start(std::string const& port, std::string const& host = "0.0.0.0") override;
+        void start(std::string const& port, std::string const& host = "::") override;
 
         /**
          *  Stops the server and terminates all connections.

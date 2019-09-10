@@ -8,6 +8,7 @@ namespace attender
     {
     public:
         session(std::string id = "");
+		virtual ~session() = default;
         std::string id() const;
 
     private:
