@@ -94,6 +94,17 @@ namespace attender
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_basic_server::mount(
+       std::string const& root_path,
+       std::string const& path_template,
+       mount_callback_2 const& on_connect,
+       mount_option_set const& supported_methods,
+       int priority
+    )
+    {
+        router_.mount(root_path, path_template, on_connect, supported_methods, priority);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::mount(
         std::string const& root_path,
         std::string const& path_template,
         mount_callback const& on_connect,

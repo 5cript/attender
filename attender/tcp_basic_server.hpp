@@ -145,7 +145,14 @@ namespace attender
          *  @param path_template Presume root_path is /home/user/bla and path_template is /home, then requests to /home will
          *                       be redirected to /home/user/bla
          *  @param on_connect A handler called before executing operations. The handler may return false, if e.g. dubious / unauthorized.
+         *  @param priority A priority for the mount route. Its usually beneficial to have one below 0 so that non-mount routes
+                            get preferred.
          */
+        void mount(std::string const& root_path,
+                   std::string const& path_template,
+                   mount_callback_2 const& on_connect,
+                   mount_option_set const& supported_methods = {mount_options::GET, mount_options::HEAD, mount_options::OPTIONS},
+                   int priority = -100);
         void mount(std::string const& root_path,
                    std::string const& path_template,
                    mount_callback const& on_connect,

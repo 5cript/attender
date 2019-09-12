@@ -17,6 +17,7 @@ namespace attender
         , http_only_{http_only}
         , max_age_{max_age}
         , domain_{std::move(domain)}
+        , gen_{}
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -30,12 +31,13 @@ namespace attender
         , http_only_{http_only}
         , max_age_{max_age}
         , domain_{std::move(domain)}
+        , gen_{}
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::string uuid_session_cookie_generator::generate_id() const
     {
-        return uuid_generator::generate_id();
+        return gen_.generate_id();
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::string uuid_session_cookie_generator::session_name() const
@@ -55,10 +57,9 @@ namespace attender
         return keks;
     }
 //#####################################################################################################################
-    std::string uuid_generator::generate_id()
+    std::string uuid_generator::generate_id() const
     {
-        auto uuid = boost::uuids::random_generator{}();
-        return boost::uuids::to_string(uuid);
+        return boost::uuids::to_string(gen_());
     }
 //#####################################################################################################################
 }

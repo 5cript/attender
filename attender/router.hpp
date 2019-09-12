@@ -71,6 +71,14 @@ namespace attender
             mount_option_set const& supported_methods
         );
 
+        void mount(
+            std::string const& root_path,
+            std::string const& path_template,
+            mount_callback_2 const& callback,
+            mount_option_set const& supported_methods,
+            int priority = -100
+        );
+
         boost::optional <route> find_route(request_header const& header, match_result& match_level) const;
 
     private:

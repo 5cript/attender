@@ -167,6 +167,20 @@ namespace attender
         mount_option_set const& supported_methods
     )
     {
+        mount(root_path, path_template, [cb = callback](request_handler* request, mount_response* mount_response, std::string_view)
+        {
+            return cb(request, mount_response);
+        }, supported_methods);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void request_router::mount(
+        std::string const& root_path,
+        std::string const& path_template,
+        mount_callback_2 const& callback,
+        mount_option_set const& supported_methods,
+        int priority
+    )
+    {
         if (supported_methods.empty())
             throw std::invalid_argument("supported methods must not be empty.");
 
@@ -179,14 +193,14 @@ namespace attender
             add_route({#METHOD, path_template, \
             [CAPTURE_BOX, cutFromFront, root_path](auto req, auto res) { \
             mount_response resp; \
-            if (callback(req, &resp)) \
-            { \
-                auto path = req->path(); \
-                path.erase(0, cutFromFront); \
-                if (root_path.back() != '/' && root_path.back() != '\\' && path.front() != '/') \
-                    path = root_path + "/" + path; \
-                else \
-                    path = root_path + path;
+            auto path = req->path(); \
+            path.erase(0, cutFromFront); \
+            if (root_path.back() != '/' && root_path.back() != '\\' && path.front() != '/') \
+                path = root_path + "/" + path; \
+            else \
+                path = root_path + path; \
+            if (callback(req, &resp, path)) \
+            {
 
         #define MOUNT_CASE_BEGIN(METHOD) \
             MOUNT_CASE_BEGIN_BASE(METHOD, callback)
@@ -203,7 +217,7 @@ namespace attender
                     status = 403; \
                 res->send_status(status); \
             } \
-            }, true}, -100); \
+            }, true}, priority); \
             break; \
         }
 

@@ -3,9 +3,19 @@
 #include "session_cookie_generator_interface.hpp"
 
 #include <string>
+#include <boost/uuid/uuid_generators.hpp>
 
 namespace attender
 {
+    class uuid_generator
+    {
+    public:
+        std::string generate_id() const;
+
+    private:
+        mutable boost::uuids::random_generator gen_;
+    };
+
     class uuid_session_cookie_generator : public session_cookie_generator_interface
     {
     public:
@@ -51,10 +61,6 @@ namespace attender
         bool http_only_; // false = not set
         uint64_t max_age_; // 0 = not set
         std::string domain_; // empty = not set
-    };
-
-    struct uuid_generator
-    {
-        static std::string generate_id();
+        uuid_generator gen_;
     };
 }

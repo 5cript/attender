@@ -20,7 +20,7 @@ namespace attender
         }
         std::string create_session() override
         {
-            auto id = IdGenerator::generate_id();
+            auto id = gen_.generate_id();
             sessions_[id] = SessionT{id};
             return id;
         }
@@ -46,5 +46,6 @@ namespace attender
 
     private:
         std::unordered_map <std::string, SessionT> sessions_;
+        IdGenerator gen_;
     };
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <string_view>
 #include <memory>
 
 #ifdef DELETE
@@ -48,6 +49,9 @@ namespace attender
                                                                response_handler* /*response*/)>;
     using mount_callback = std::function <bool(request_handler* request,
                                                mount_response* mount_response)>;
+    using mount_callback_2 = std::function <bool(request_handler* request,
+                                                 mount_response* mount_response,
+                                                 std::string_view real_path)>;
 
     // accept callback
     template <typename SocketT>
