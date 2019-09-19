@@ -15,10 +15,10 @@ namespace attender
         sstr << weekdays[tm->tm_wday] << ", "
              << tm->tm_mday << " "
              << months[tm->tm_mon] << ' '
-             << tm->tm_year << " "
+             << (1900+tm->tm_year) << " "
              << std::setfill('0') << std::setw(2) << tm->tm_hour << ':'
-             << tm->tm_min << ':'
-             << tm->tm_sec
+             << std::setfill('0') << std::setw(2) << tm->tm_min << ':'
+             << std::setfill('0') << std::setw(2) << tm->tm_sec
         ;
         if (suffix != nullptr)
             sstr << suffix;
@@ -43,7 +43,7 @@ namespace attender
     std::string date::to_gmt_string() const
     {
         auto time = std::chrono::system_clock::to_time_t(time_point_);
-        return (gmtime(&time), " GMT");
+        return tm_formatter(gmtime(&time), " GMT");
     }
 //#####################################################################################################################
 }
