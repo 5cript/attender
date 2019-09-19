@@ -169,6 +169,11 @@ namespace attender
             end();
     }
 //---------------------------------------------------------------------------------------------------------------------
+    bool response_handler::has_concluded() const
+    {
+        return headerSent_.load();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void response_handler::end()
     {
         send_header([this](boost::system::error_code){

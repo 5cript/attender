@@ -13,7 +13,8 @@ namespace attender
     {
         live,
         not_found,
-        no_session
+        no_session,
+        timed_out
     };
 
     class session_manager
@@ -67,6 +68,15 @@ namespace attender
         {
             if (session)
                 session_storage_->delete_session(session.get().id());
+        }
+
+        template <typename SessionStorageT>
+        SessionStorageT* get_storage()
+        {
+            auto* ptr = session_storage_.get();
+            if (ptr == nullptr)
+                return nullptr;
+            return dynamic_cast <SessionStorageT*> (ptr);
         }
 
     private:

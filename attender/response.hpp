@@ -187,6 +187,12 @@ namespace attender
          **/
         void set_cookie(cookie ck);
 
+        /**
+         *  Returns whether or not sending or ending this is still possible.
+         *  Useful for mount returns.
+         */
+        bool has_concluded() const;
+
         // TODO:
         // cookie, attachement, download, format(does not belong here), json, xml
 

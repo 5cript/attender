@@ -14,7 +14,7 @@ namespace attender
         , expires_{}
         , max_age_{0}
         , secure_{}
-        , http_only_{}
+        , http_only_{false}
     {
 
     }
@@ -27,7 +27,7 @@ namespace attender
         , expires_{}
         , max_age_{0}
         , secure_{}
-        , http_only_{}
+        , http_only_{false}
     {
 
     }

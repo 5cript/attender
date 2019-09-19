@@ -2,6 +2,10 @@
 
 #include <unordered_set>
 
+#ifdef DELETE
+#undef DELETE
+#endif // DELETE
+
 namespace attender
 {
     enum mount_options

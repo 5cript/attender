@@ -167,7 +167,7 @@ namespace attender
         mount_option_set const& supported_methods
     )
     {
-        mount(root_path, path_template, [cb = callback](request_handler* request, mount_response* mount_response, std::string_view)
+        mount(root_path, path_template, [cb = callback](request_handler* request, response_handler* mount_response, std::string_view)
         {
             return cb(request, mount_response);
         }, supported_methods);
@@ -192,14 +192,13 @@ namespace attender
         { \
             add_route({#METHOD, path_template, \
             [CAPTURE_BOX, cutFromFront, root_path](auto req, auto res) { \
-            mount_response resp; \
             auto path = req->path(); \
             path.erase(0, cutFromFront); \
             if (root_path.back() != '/' && root_path.back() != '\\' && path.front() != '/') \
                 path = root_path + "/" + path; \
             else \
                 path = root_path + path; \
-            if (callback(req, &resp, path)) \
+            if (callback(req, res, path)) \
             {
 
         #define MOUNT_CASE_BEGIN(METHOD) \
@@ -210,12 +209,9 @@ namespace attender
 
         #define MOUNT_CASE_END() \
             } \
-            else \
+            else if (!res->has_concluded()) \
             { \
-                auto status = resp.get_status(); \
-                if (status == 0) \
-                    status = 403; \
-                res->send_status(status); \
+                res->send_status(403); \
             } \
             }, true}, priority); \
             break; \
@@ -249,7 +245,7 @@ namespace attender
                     else
                         req->read_body(*writer, 0).then([writer, res](){
                             res->status(204).end();
-                        }).except([](auto err){
+                        }).except([](auto){
                             //std::cout << err.message() << "\n";
                         });
                 }
@@ -311,9 +307,7 @@ namespace attender
                     allowed_methods += mount_option_to_string(i);
                     beg = false;
                 }
-                resp.try_set("Allow", allowed_methods)
-                    .try_set("Server", "libattender");
-                resp.to_response(*res);
+                res->set("Allow", allowed_methods);
                 res->send_status(200);
             }
             MOUNT_CASE_END()

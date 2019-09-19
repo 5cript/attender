@@ -47,10 +47,11 @@ namespace attender
     using missing_handler_callback = final_callback;
     using interactive_connected_callback = std::function <bool(request_handler* /*request*/,
                                                                response_handler* /*response*/)>;
+
     using mount_callback = std::function <bool(request_handler* request,
-                                               mount_response* mount_response)>;
+                                               response_handler* mount_response)>;
     using mount_callback_2 = std::function <bool(request_handler* request,
-                                                 mount_response* mount_response,
+                                                 response_handler* mount_response,
                                                  std::string_view real_path)>;
 
     // accept callback
