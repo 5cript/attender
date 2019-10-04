@@ -26,7 +26,7 @@ namespace attender
                 return;
             }
 
-            repHandler->get_connection()->write(*data, [repHandler, cleanup](boost::system::error_code){
+            repHandler->get_connection()->write(*data, [repHandler, cleanup]([[maybe_unused]] boost::system::error_code ec){
                 // end no matter what.
                 cleanup();
                 repHandler->end();

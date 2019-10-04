@@ -202,7 +202,14 @@ namespace attender
                                 cb(ec);
                         }
                         else
+                        {
+                            // If you crash in here your connection is already dead.
+                            // The error message is something like "write on shutdown connection" or
+                            // "ssl_writer_interal:protocol is shutdown". Do NOT! use send/send_file/end multiple times.
+                            // The library has no means of telling if a connection is destroyed or not. The very check itself requires
+                            // a lively connection.
                             cb(ec);
+                        }
                     }
                 );
             }
