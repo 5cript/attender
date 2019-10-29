@@ -13,7 +13,7 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
 endif()
 
 # Compiler Options
-add_cxx_compiler_flag("-std=c++14")
+add_cxx_compiler_flag("-std=c++17")
 add_cxx_compiler_flag("-Wall")
 add_cxx_compiler_flag("-Wall")
 add_cxx_compiler_flag("-Wextra")
