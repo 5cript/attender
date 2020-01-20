@@ -10,27 +10,27 @@ A windows/linux RESTful webservice server for professionals built using boost::a
 
 ## Features
 ### What does attender have:
-- High scalability
 - SSL/TLS
 - rudamentary session support
 - cookies
 - expressjs like interface
+- sending chunked encoding
 
 ### What does attender not have (yet):
-- JSON / XML support (planed)
-- keep alive
-- custom error code pages.
-- HTTP/2
+- Built in JSON / XML support. But its not needed. Using nlohmann json with this feels great.
+- custom error code pages. (planed)
+- HTTP/2 (not planed)
 
 ## Documentation
 **Doxygen documentation is available in the wiki.**
 https://github.com/5cript/attender/wiki
 
 ## Dependencies and Requirements
-- C++14 compliant compiler (clang++, g++, MSVC (VC2017))
+- C++17 compliant compiler (clang++, g++, MSVC (VC2019))
 - boost asio
 - boost filesystem
 - openssl
+- (optional) libbrotli
 
 ## How to build
 This project provides a cmake file (for a static library).
