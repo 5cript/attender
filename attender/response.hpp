@@ -3,6 +3,7 @@
 #include "tcp_fwd.hpp"
 #include "response_header.hpp"
 #include "cookie.hpp"
+#include "encoding/producer.hpp"
 
 #include <atomic>
 
@@ -106,7 +107,26 @@ namespace attender
          *  @param body A body to send.
          *  @param on_finish A callback function, that is called after the send operation finished.
          */
-        void send(std::istream& body, std::function <void()> on_finish = nop);
+        void send(std::istream& body, std::function <void()> const& on_finish = nop);
+
+        /**
+         *  Sends the HTTP response. After a call to send, the status and header fiels
+         *  can no longer be changed as they will be sent with this function.
+         *  As this function completes the response, chaining will no longer be possible.
+         *
+         *  Content-Length will automatically be set, if not previously defined.
+         *  Will force set Transfer-Encoding to chunked.
+         *
+         *  @param body A body to send.
+         *  @param on_finish A callback function that is called after the send operation finished.
+         *                   This function CANNOT determine the prod.complete(), because its only called
+         *                   when the production already completed.
+         */
+        void send_chunked
+        (
+            producer& prod,
+            std::function <void(boost::system::error_code)> const& on_finish = [](auto){}
+        );
 
         /**
          *  Sends the HTTP response. After a call to send, the status and header fields

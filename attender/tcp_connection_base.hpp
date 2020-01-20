@@ -170,6 +170,25 @@ namespace attender
         }
 
         /**
+         *  A write function for pure data.
+         *  This function assumes that passed data survives the entire ordeal.
+         */
+        void write(std::vector <char>&& eol_container, write_callback handler) override
+        {
+            write_buffer_ = std::move(eol_container);
+
+            boost::asio::async_write
+            (
+                *socket_,
+                boost::asio::buffer(write_buffer_),
+                [this, handler](boost::system::error_code ec, std::size_t)
+                {
+                    handler(ec);
+                }
+            );
+        }
+
+        /**
          *  This function writes the whole container onto the stream.
          *  The handler function is called when the write operation completes.
          *  Do not (!) call write while another write operation is in progress!

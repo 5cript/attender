@@ -8,7 +8,7 @@ namespace attender
 //#####################################################################################################################
     response_header::response_header()
         : protocol_{"HTTP"}
-        , version_{"2.0"}
+        , version_{"1.1"}
         , code_{204}
         , message_{translate_code(code_)}
         , fields_{}

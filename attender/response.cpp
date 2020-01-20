@@ -7,6 +7,9 @@
 
 #include <fstream>
 #include <memory>
+#include <charconv>
+
+using namespace std::string_literals;
 
 namespace attender
 {
@@ -15,22 +18,41 @@ namespace attender
      *  Trick to hide template in c++ file. So that tcp_connection.hpp is not required in the header.
      */
     template <typename T>
-    static void write(response_handler* repHandler, std::shared_ptr <T> data, std::function <void()> cleanup = nop)
+    static void write(response_handler* res, std::shared_ptr <T> data, std::function <void()> cleanup = nop)
     {
-        repHandler->send_header([repHandler, data, cleanup](boost::system::error_code ec){
+        res->send_header([res, data, cleanup](boost::system::error_code ec){
             // end the connection, on error
             if (ec)
             {
                 cleanup();
-                repHandler->end();
+                res->end();
                 return;
             }
 
-            repHandler->get_connection()->write(*data, [repHandler, cleanup]([[maybe_unused]] boost::system::error_code ec){
+            res->get_connection()->write(*data, [res, cleanup]([[maybe_unused]] boost::system::error_code ec){
                 // end no matter what.
                 cleanup();
-                repHandler->end();
+                res->end();
             });
+        });
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    template <typename T /*fptr: void(response_handler* res)*/>
+    static void write_header_for_chunked
+    (
+        response_handler* res,
+        T&& on_header_sent
+    )
+    {
+        res->send_header([res, on_header_sent{std::forward <T&&>(on_header_sent)}](boost::system::error_code ec) {
+            // end the connection, on error
+            if (ec)
+            {
+                res->end();
+                return;
+            }
+
+            on_header_sent(res);
         });
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -132,7 +154,7 @@ namespace attender
         write(this, std::make_shared <std::vector <char>> (body));
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void response_handler::send(std::istream& body, std::function <void()> on_finish)
+    void response_handler::send(std::istream& body, std::function <void()> const& on_finish)
     {
         body.seekg(0, std::ios_base::end);
         auto size = body.tellg();
@@ -147,6 +169,69 @@ namespace attender
             status(204);
 
         write(this, std::make_shared <stream_keeper> (body), on_finish);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void response_handler::send_chunked
+    (
+        producer& prod,
+        std::function <void(boost::system::error_code)> const& on_finish
+    )
+    {
+        status(200);
+        try_set("Content-Encoding", prod.encoding());
+        set("Transfer-Encoding", "chunked");
+
+        write_header_for_chunked(this, [this, &prod, on_finish](auto)
+        {
+            // header is sent, now send chunked data.
+            std::function <void()> on_produce;
+            on_produce = [this, &prod, on_finish, on_produce]()
+            {
+                if (prod.complete())
+                {
+                    this->get_connection()->write("0\r\n\r\n"s, [this, on_finish](boost::system::error_code ec) {
+                        on_finish(ec);
+                        this->end();
+                    });
+                    return;
+                }
+
+                std::size_t avail = prod.available();
+                if (avail == 0)
+                    return;
+
+                std::size_t size_len = producer::hexlen(avail);
+
+                std::vector <char> avail_bytes(avail + size_len + 4ull);
+                auto [p, to_chars_error] = std::to_chars(avail_bytes.data(), avail_bytes.data() + size_len, avail);
+                *p = '\r';
+                *(p+1) = '\n';
+
+                auto iter = std::begin(avail_bytes) + size_len + 2;
+                std::copy(prod.data(), prod.data() + avail, iter);
+                iter += avail;
+                *iter = '\r';
+                ++iter;
+                *iter = '\n';
+
+                get_connection()->write(
+                    std::move(avail_bytes),
+                    [&prod, avail](auto ec)
+                    {
+                        if (!ec)
+                            prod.has_consumed(avail);
+                        else {
+                            prod.on_error(ec);
+                            prod.end_production(ec);
+                        }
+                    }
+                );
+            };
+
+            prod.set_on_produce_cb(on_produce);
+            prod.set_finish_callback(on_finish);
+            prod.start_production();
+        });
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool response_handler::send_file(std::string const& fileName)

@@ -225,6 +225,74 @@ int main()
     server.start(80);
 ```
 
+### Chunked Encoding (write only)
+```C++
+#include <attender/attender.hpp>
+
+int main() 
+{
+    /* Create normal or secure server */
+
+    server.get("/chunky", [](auto req, auto res)
+    {
+		// Creates a streaming producer.
+		// The streaming producer is meant as an example implementation of 'producer'.
+		// But it can be used for very very simple data streaming.
+        std::shared_ptr <streaming_producer> produ;
+        produ.reset(new streaming_producer
+            {
+                "identity", // encoding, identity in this case.
+                [&produ]()
+                {
+					// on after setup completion. 
+                },
+                [](auto ec)
+                {
+					// Some error occured. Most likely error: an aborted connection
+                    std::cout << "chunky ec: " << ec << "\n";
+                }
+            }
+        );
+
+		// creating a thread that produces some data to shove into the connection.
+        std::shared_ptr <std::thread> blab{new std::thread([produ](){
+			// wait for the connection to setup.
+            produ->wait_for_consumer();
+
+            int c = 0;
+			// while the connection is up:
+            while(produ->has_consumer_attached())
+            {
+				// write into the stream:
+                *produ << "asdf";
+                std::this_thread::sleep_for(500ms);
+                ++c;
+                if (c > 20)
+                {
+					// this has to be called in order to gracefully end the transmission.
+					// the connection will persist forever otherwise.
+                    produ->finish();
+                    return;
+                }
+            }
+        })};
+
+		// now do the actual call.
+        res->send_chunked(*produ, [produ, blab](auto e) {
+            std::cout << "connection ended" << std::endl;
+			
+			// join the producer thread when the connection ends if joinable.
+            if (blab->joinable())
+                blab->join();
+        });
+		
+		// do NOT use res anymore here. send_chunked is like send and end in the way
+		// that res must not be used after calling these functions.
+    });
+    
+    server.start(80);
+```
+
 ### How to write
 ```C++
 server.get("/write_test", [](auto req, auto res) {

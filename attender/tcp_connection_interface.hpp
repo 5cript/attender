@@ -27,6 +27,7 @@ namespace attender
         virtual void write(std::istream& stream, write_callback handler) = 0;
         virtual void write(std::string const& string, write_callback handler) = 0;
         virtual void write(std::vector <char> const& container, write_callback handler) = 0;
+        virtual void write(std::vector <char>&& eol_container, write_callback handler) = 0;
         virtual std::size_t ready_count() const = 0;
 
         // buffer
