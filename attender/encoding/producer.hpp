@@ -65,14 +65,6 @@ namespace attender
         virtual char const* data() const = 0;
 
         /**
-         *  The server can request a portion of the buffer start for chunk-extra-data.
-         *  Return false if you dont implement this.
-         *  It then takes care of the \r\n at the end. SIZE_IN_HEX must NOT contain this chunk-extra-data.
-         *  SIZE_IN_HEX;CHUNK_EXTRA_DATA;\r\n.
-         */
-        virtual bool reserve(std::size_t bytes) = 0;
-
-        /**
          *  Returns whether the data production has ended.
          */
         virtual bool complete() const = 0;

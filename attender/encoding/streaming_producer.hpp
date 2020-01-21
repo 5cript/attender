@@ -29,7 +29,6 @@ namespace attender
         std::string encoding() const override;
         std::size_t available() const override;
         char const* data() const override;
-        bool reserve(std::size_t bytes) override;
         bool complete() const override;
         void has_consumed(std::size_t size) override;
         void on_error(boost::system::error_code) override;
@@ -74,7 +73,6 @@ namespace attender
         std::function <void()> on_ready_;
         std::function <void(boost::system::error_code)> on_error_;
         std::atomic <std::size_t> avail_;
-        std::atomic <std::size_t> reserved_;
         std::atomic_bool completed_;
         std::recursive_mutex buffer_saver_;
     };

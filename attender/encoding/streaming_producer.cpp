@@ -14,7 +14,6 @@ namespace attender
         , on_ready_{std::move(on_ready)}
         , on_error_{std::move(on_error)}
         , avail_{0}
-        , reserved_{0}
         , completed_{false}
     {
     }
@@ -38,12 +37,6 @@ namespace attender
     char const* streaming_producer::data() const
     {
         return buffer_.data();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    bool streaming_producer::reserve(std::size_t bytes)
-    {
-        reserved_.store(bytes);
-        return false;
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool streaming_producer::complete() const
