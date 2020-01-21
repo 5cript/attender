@@ -53,6 +53,12 @@ namespace attender
         producer::has_consumed(size);
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void streaming_producer::buffer_locked_do(std::function <void()> const& fn) const override
+    {
+        std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
+        fn();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void streaming_producer::on_error(boost::system::error_code ec)
     {
         on_error_(ec);

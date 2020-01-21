@@ -62,6 +62,8 @@ namespace attender
             return operator<<(stream, std::to_string(nullterminated));
         }
 
+        void buffer_locked_do(std::function <void()> const&) const override;
+
         /**
          *  Set stream as complete.
          */

@@ -5,6 +5,15 @@
 namespace attender
 {
 //#####################################################################################################################
+    brotli_configuration brotli_configuration::make_default()
+    {
+        return {
+            BROTLI_DEFAULT_QUALITY,
+            BROTLI_DEFAULT_WINDOW,
+            BROTLI_MODE_GENERIC
+        };
+    }
+//#####################################################################################################################
     struct brotli_encoder::implementation
     {
         brotli_configuration config;
@@ -14,7 +23,7 @@ namespace attender
         ~implementation();
     };
 //---------------------------------------------------------------------------------------------------------------------
-    implementation::implementation(brotli_configuration config)
+    brotli_encoder::implementation::implementation(brotli_configuration config)
         : config{std::move(config)}
     {
         ctx = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
@@ -22,19 +31,11 @@ namespace attender
         BrotliEncoderSetParameter(ctx, BROTLI_PARAM_MODE, config.mode);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    implementation::~implementation()
+    brotli_encoder::implementation::~implementation()
     {
         BrotliEncoderDestroyInstance(ctx);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    brotli_encoder make_default()
-    {
-        return {
-            BROTLI_DEFAULT_QUALITY,
-            BROTLI_DEFAULT_WINDOW,
-            BROTLI_MODE_GENERIC
-        }
-    }
 //#####################################################################################################################
     std::string brotli_encoder::encoding() const
     {
@@ -46,9 +47,11 @@ namespace attender
         , input_{}
         , output_{}
         , input_start_{0}
+        , output_start_offset_{0}
         , avail_in_{0}
         , input_cutoff_{128'000}
         , output_minimum_avail_{32'768}
+        , output_considered_overflow_{20'000'000}
         , avail_{0}
         , completed_{}
         , buffer_saver_{}
@@ -78,7 +81,8 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     char const* brotli_encoder::data() const
     {
-        return buffer_.data();
+        return nullptr;
+        //return buffer_.data();
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool brotli_encoder::complete() const
@@ -88,10 +92,12 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::has_consumed(std::size_t size)
     {
+        /*
         avail_.store(avail_.load() - size);
         std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
         buffer_.erase(buffer_.begin(), buffer_.begin() + size);
 
+        */
         producer::has_consumed(size);
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -102,7 +108,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::start_production()
     {
-        on_ready_();
+        //on_ready_();
         if (available() > 0)
             produced_data();
     }
@@ -131,18 +137,30 @@ namespace attender
         avail_in_ += data_size;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void brotli_encoder::reserve_output()
+    {
+        std::lock_guard <std::recursive_mutex> guard(buffer_saver_);
+
+        std::size_t avail_out = output_.size() - output_start_offset_;
+        if (avail_out < output_minimum_avail_)
+        {
+            output_.resize(output_.size() + output_minimum_avail_);
+        }
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::push(char const* data_begin, std::size_t data_size)
     {
         bufferize_input(data_begin, data_size);
-
-        uint8_t const* next_in = &*input_.begin();
+        reserve_output();
 
         std::lock_guard <std::recursive_mutex> guard(buffer_saver_);
-        uint8_t const* next_out = &*input_.begin();
-        BrotliEcnoderCompressStream
+        uint8_t const* next_in = &*input_.begin();
+        uint8_t const* next_out = &*output_.begin() + output_start_offset_;
+        std::size_t avail_out = output_.size() - output_start_offset_;
+        BrotliEncoderCompressStream
         (
             // state
-            brotctx_.impl_->ctx,
+            brotctx_->ctx,
 
             // operation - compress, compression does not need to be completed here.
             BROTLI_OPERATION_PROCESS,
@@ -153,7 +171,18 @@ namespace attender
             // point to input (also carries OUT)
             &next_in,
 
+            // available space in output
+            &avail_out,
 
+            // pointer to free output space
+            &next_out
+        };
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void brotli_encoder::buffer_locked_do(std::function <void()> const& fn) const
+    {
+        std::lock_guard <std::recursive_mutex> guard(buffer_saver_);
+        fn();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::push(std::string const& data)

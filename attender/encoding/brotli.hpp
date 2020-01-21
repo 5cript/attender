@@ -1,5 +1,7 @@
 #pragma once
 
+#include "producer.hpp"
+
 #include <memory>
 
 namespace attender
@@ -10,7 +12,7 @@ namespace attender
         int window;
         int mode;
 
-        static brotli_encoder make_default();
+        static brotli_configuration make_default();
     };
 
     class brotli_encoder : public producer
@@ -40,7 +42,7 @@ namespace attender
         /// Do NOT call concurrently with itself or other pushes!
         void push(std::string const& data);
 
-        brotli_encoder& operator<<(brotli_encoder& brotli, std::string const& data);
+        friend brotli_encoder& operator<<(brotli_encoder& brotli, std::string const& data);
 
         // derived methods
         std::size_t available() const override;
@@ -49,6 +51,7 @@ namespace attender
         void has_consumed(std::size_t size) override;
         void on_error(boost::system::error_code) override;
         void start_production() override;
+        void buffer_locked_do(std::function <void()> const&) const  override;
 
     private:
         void shrink_input();
@@ -58,15 +61,18 @@ namespace attender
 
     private:
         struct implementation;
-        std::unique_ptr <Implementation> brotctx_;
+        std::unique_ptr <implementation> brotctx_;
 
         std::vector <uint8_t> input_;
         std::vector <char> output_;
         std::size_t input_start_;
-        std::size_t output
+
+        /// Offset where brotli can write INTO the buffer
+        std::size_t output_start_offset_;
         std::size_t avail_in_;
         std::size_t input_cutoff_;
         std::size_t output_minimum_avail_;
+        std::size_t output_considered_overflow_;
 
         std::atomic <std::size_t> avail_;
         std::atomic_bool completed_;

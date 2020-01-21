@@ -65,6 +65,11 @@ namespace attender
         virtual char const* data() const = 0;
 
         /**
+         *  Everything within the supplied function is guarded by a mutex that also guards other buffer accesses.
+         */
+        virtual void buffer_locked_do(std::function <void()> const&) const = 0;
+
+        /**
          *  Returns whether the data production has ended.
          */
         virtual bool complete() const = 0;
