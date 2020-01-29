@@ -9,7 +9,9 @@
 
 #include "attender/ssl_contexts/ssl_example_context.hpp"
 
-#include "attender/encoding/streaming_producer.hpp"
-
 #include "attender/response.hpp"
 #include "attender/request.hpp"
+
+// Encoders
+#include "attender/encoding/streaming_producer.hpp"
+#include "attender/encoding/brotli.hpp"

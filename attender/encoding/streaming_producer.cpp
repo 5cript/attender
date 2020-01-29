@@ -53,7 +53,7 @@ namespace attender
         producer::has_consumed(size);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void streaming_producer::buffer_locked_do(std::function <void()> const& fn) const override
+    void streaming_producer::buffer_locked_do(std::function <void()> const& fn) const
     {
         std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
         fn();

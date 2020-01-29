@@ -53,11 +53,18 @@ namespace attender
         void start_production() override;
         void buffer_locked_do(std::function <void()> const&) const  override;
 
+        /// Flushes the compressed data to output. Warning not the same as finish.
+        void flush();
+
+        /// Flushes remaining data to output and completes the compression.
+        void finish();
+
     private:
         void shrink_input();
         void bufferize_input(char const* data_begin, std::size_t data_size);
         void reserve_output();
         void process();
+        void push(char const* data_begin, std::size_t data_size, int operation);
 
     private:
         struct implementation;
@@ -73,9 +80,10 @@ namespace attender
         std::size_t input_cutoff_;
         std::size_t output_minimum_avail_;
         std::size_t output_considered_overflow_;
+        std::size_t total_out_;
 
         std::atomic <std::size_t> avail_;
         std::atomic_bool completed_;
-        std::recursive_mutex buffer_saver_;
+        mutable std::recursive_mutex buffer_saver_;
     };
 }

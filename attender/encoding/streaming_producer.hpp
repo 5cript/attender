@@ -76,6 +76,6 @@ namespace attender
         std::function <void(boost::system::error_code)> on_error_;
         std::atomic <std::size_t> avail_;
         std::atomic_bool completed_;
-        std::recursive_mutex buffer_saver_;
+        mutable std::recursive_mutex buffer_saver_;
     };
 }

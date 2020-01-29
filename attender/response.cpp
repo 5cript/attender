@@ -208,9 +208,9 @@ namespace attender
                 *(p+1) = '\n';
 
                 auto iter = std::begin(avail_bytes) + size_len + 2;
-                prod.buffer_locked_do([&prod, &avail, &iter](
+                prod.buffer_locked_do([&prod, &avail, &iter]{
                     std::copy(prod.data(), prod.data() + avail, iter);
-                ));
+                });
                 iter += avail;
                 *iter = '\r';
                 ++iter;

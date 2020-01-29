@@ -2,6 +2,8 @@
 
 #include <brotli/encode.h>
 
+#include <iostream>
+
 namespace attender
 {
 //#####################################################################################################################
@@ -52,6 +54,7 @@ namespace attender
         , input_cutoff_{128'000}
         , output_minimum_avail_{32'768}
         , output_considered_overflow_{20'000'000}
+        , total_out_{0}
         , avail_{0}
         , completed_{}
         , buffer_saver_{}
@@ -81,8 +84,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     char const* brotli_encoder::data() const
     {
-        return nullptr;
-        //return buffer_.data();
+        return output_.data();
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool brotli_encoder::complete() const
@@ -92,12 +94,9 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::has_consumed(std::size_t size)
     {
-        /*
         avail_.store(avail_.load() - size);
         std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
-        buffer_.erase(buffer_.begin(), buffer_.begin() + size);
-
-        */
+        output_.erase(output_.begin(), output_.begin() + size);
         producer::has_consumed(size);
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -116,6 +115,21 @@ namespace attender
     void brotli_encoder::process()
     {
 
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void brotli_encoder::flush()
+    {
+        push(nullptr, 0, BROTLI_OPERATION_FLUSH);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void brotli_encoder::finish()
+    {
+        do
+        {
+            push(nullptr, 0, BROTLI_OPERATION_FINISH);
+        } while (avail_in_ != 0);
+        completed_.store(true);
+        produced_data();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::shrink_input()
@@ -150,20 +164,29 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::push(char const* data_begin, std::size_t data_size)
     {
-        bufferize_input(data_begin, data_size);
+        push(data_begin, data_size, BROTLI_OPERATION_PROCESS);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void brotli_encoder::push(char const* data_begin, std::size_t data_size, int operation)
+    {
+        if (data_begin != nullptr && data_size > 0)
+        {
+            bufferize_input(data_begin, data_size);
+        }
         reserve_output();
 
         std::lock_guard <std::recursive_mutex> guard(buffer_saver_);
         uint8_t const* next_in = &*input_.begin();
-        uint8_t const* next_out = &*output_.begin() + output_start_offset_;
+        uint8_t* next_out = reinterpret_cast <uint8_t*>(&*output_.begin() + output_start_offset_);
         std::size_t avail_out = output_.size() - output_start_offset_;
-        BrotliEncoderCompressStream
+        std::size_t avail_out_before = avail_out;
+        auto res = BrotliEncoderCompressStream
         (
             // state
             brotctx_->ctx,
 
-            // operation - compress, compression does not need to be completed here.
-            BROTLI_OPERATION_PROCESS,
+            // operation BROTLI_OPERATION_PROCESS most of the times. type: enum BrotliEncoderOperation
+            static_cast <BrotliEncoderOperation> (operation),
 
             // available data on the input buffer
             &avail_in_,
@@ -175,8 +198,17 @@ namespace attender
             &avail_out,
 
             // pointer to free output space
-            &next_out
-        };
+            &next_out,
+
+            // total bytes compressed since last state initialization
+            &total_out_
+        );
+
+        avail_.store(avail_.load() + (avail_out_before - avail_out));
+
+        std::cout << res << "\n";
+        if (res)
+            produced_data();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::buffer_locked_do(std::function <void()> const& fn) const
@@ -192,7 +224,7 @@ namespace attender
 //#####################################################################################################################
     brotli_encoder& operator<<(brotli_encoder& brotli, std::string const& data)
     {
-
+        return brotli;
     }
 //#####################################################################################################################
 }
