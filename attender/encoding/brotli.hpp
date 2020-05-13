@@ -36,10 +36,19 @@ namespace attender
          */
         void set_minimum_avail(std::size_t min_avail);
 
-        /// Do NOT call concurrently with itself or other pushes!
+        /**
+         *  Returns the amount of available bytes in the input buffer.
+         */
+        std::size_t available_in() const noexcept;
+
+        /**
+         * Do NOT call concurrently with itself or other pushes!
+         */
         void push(char const* data_begin, std::size_t data_size);
 
-        /// Do NOT call concurrently with itself or other pushes!
+        /**
+         * Do NOT call concurrently with itself or other pushes!
+         */
         void push(std::string const& data);
 
         friend brotli_encoder& operator<<(brotli_encoder& brotli, std::string const& data);
@@ -63,7 +72,6 @@ namespace attender
         void shrink_input();
         void bufferize_input(char const* data_begin, std::size_t data_size);
         void reserve_output();
-        void process();
         void push(char const* data_begin, std::size_t data_size, int operation);
 
     private:

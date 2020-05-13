@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+using namespace std::string_literals;
+
 namespace attender
 {
 //#####################################################################################################################
@@ -74,7 +76,6 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     brotli_encoder::~brotli_encoder()
     {
-
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::size_t brotli_encoder::available() const
@@ -94,10 +95,15 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::has_consumed(std::size_t size)
     {
-        avail_.store(avail_.load() - size);
-        std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
-        output_.erase(output_.begin(), output_.begin() + size);
+        if (size > 0)
+        {
+            avail_.store(avail_.load() - size);
+            std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
+            output_.erase(output_.begin(), output_.begin() + size);
+        }
         producer::has_consumed(size);
+        if (consuming_.load() == false && completed_.load())
+            produced_data();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::on_error(boost::system::error_code)
@@ -110,11 +116,6 @@ namespace attender
         //on_ready_();
         if (available() > 0)
             produced_data();
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void brotli_encoder::process()
-    {
-
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::flush()
@@ -143,6 +144,8 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::bufferize_input(char const* data_begin, std::size_t data_size)
     {
+        if (avail_in_)
+
         shrink_input();
         input_.resize(input_.size() + data_size);
 
@@ -178,6 +181,7 @@ namespace attender
         std::lock_guard <std::recursive_mutex> guard(buffer_saver_);
         uint8_t const* next_in = &*input_.begin();
         uint8_t* next_out = reinterpret_cast <uint8_t*>(&*output_.begin() + output_start_offset_);
+
         std::size_t avail_out = output_.size() - output_start_offset_;
         std::size_t avail_out_before = avail_out;
         auto res = BrotliEncoderCompressStream
@@ -203,12 +207,12 @@ namespace attender
             // total bytes compressed since last state initialization
             &total_out_
         );
-
         avail_.store(avail_.load() + (avail_out_before - avail_out));
 
-        std::cout << res << "\n";
         if (res)
             produced_data();
+        else
+            production_failure("error "s + std::to_string(res));
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::buffer_locked_do(std::function <void()> const& fn) const
@@ -219,11 +223,17 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::push(std::string const& data)
     {
-        push(data.data(), data.size());
+        return push(data.data(), data.size());
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::size_t brotli_encoder::available_in() const noexcept
+    {
+        return avail_in_;
     }
 //#####################################################################################################################
     brotli_encoder& operator<<(brotli_encoder& brotli, std::string const& data)
     {
+        brotli.push(data);
         return brotli;
     }
 //#####################################################################################################################

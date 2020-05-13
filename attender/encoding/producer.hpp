@@ -16,9 +16,11 @@ namespace attender
     class producer
     {
     private:
-        std::function <void()> on_produce_{};
+        std::function <void(std::string const& err)> on_produce_{};
         std::function <void(boost::system::error_code)> on_finish_{};
         mutable std::mutex on_produce_protect_{};
+
+    protected:
         std::atomic_bool consuming_{false};
 
     protected:
@@ -26,6 +28,11 @@ namespace attender
          *  Call this if the amount of available data increased.
          */
         void produced_data() const;
+
+        /**
+         *  Call this if the production somehow failed in a way that is unrecoverable and interupts the stream.
+         */
+        void production_failure(std::string const& fail);
 
     public:
         virtual ~producer();
@@ -102,6 +109,6 @@ namespace attender
         /**
          *  Set a callback for when new data is available.
          */
-        void set_on_produce_cb(std::function <void()> cb);
+        void set_on_produce_cb(std::function <void(std::string const& err)> cb);
     };
 }

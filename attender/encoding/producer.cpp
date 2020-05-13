@@ -6,6 +6,7 @@ namespace attender
 {
     namespace
     {
+#ifndef __GNUC__
         std::size_t fast_log_base2(uint64_t n)
         {
             static const int table[64] = {
@@ -24,6 +25,7 @@ namespace attender
 
             return table[(n * 0x03f6eaf2cd271461ull) >> 58ull];
         }
+#endif
 
         std::size_t hex_size(std::size_t number)
         {
@@ -52,13 +54,13 @@ namespace attender
             consuming_.store(false);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void producer::set_on_produce_cb(std::function <void()> cb)
+    void producer::set_on_produce_cb(std::function <void(std::string const& err)> cb)
     {
         std::lock_guard <std::mutex> guard{on_produce_protect_};
-        on_produce_ = [this, cb{std::move(cb)}]()
+        on_produce_ = [this, cb{std::move(cb)}](std::string const& err)
         {
             consuming_.store(true);
-            cb();
+            cb(err);
         };
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -76,8 +78,13 @@ namespace attender
         if (has_consumer_attached())
         {
             std::lock_guard <std::mutex> guard{on_produce_protect_};
-            on_produce_();
+            on_produce_({});
         }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void producer::production_failure(std::string const& fail)
+    {
+        on_produce_(fail);
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool producer::wait_for_consumer(std::chrono::milliseconds timeout) const

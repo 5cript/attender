@@ -181,7 +181,7 @@ namespace attender
             (
                 *socket_,
                 boost::asio::buffer(write_buffer_),
-                [this, handler](boost::system::error_code ec, std::size_t)
+                [this, handler](boost::system::error_code ec, std::size_t s)
                 {
                     handler(ec);
                 }

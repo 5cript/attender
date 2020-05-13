@@ -8,6 +8,8 @@
 #include <fstream>
 #include <memory>
 #include <charconv>
+#include <iostream>
+#include <iomanip>
 
 using namespace std::string_literals;
 
@@ -184,9 +186,18 @@ namespace attender
         write_header_for_chunked(this, [this, &prod, on_finish](auto)
         {
             // header is sent, now send chunked data.
-            std::function <void()> on_produce;
-            on_produce = [this, &prod, on_finish, on_produce]()
+            std::function <void(std::string const& err)> on_produce;
+            on_produce = [this, &prod, on_finish, on_produce](std::string const& err)
             {
+                if (!err.empty())
+                {
+                    this->get_connection()->write("0\r\n\r\n"s, [this, on_finish](boost::system::error_code ec) {
+                        on_finish(ec);
+                        this->end();
+                    });
+                    return;
+                }
+
                 if (prod.complete())
                 {
                     this->get_connection()->write("0\r\n\r\n"s, [this, on_finish](boost::system::error_code ec) {
@@ -198,12 +209,16 @@ namespace attender
 
                 std::size_t avail = prod.available();
                 if (avail == 0)
+                {
+                    prod.has_consumed(0);
                     return;
+                }
 
                 std::size_t size_len = producer::hexlen(avail);
 
                 std::vector <char> avail_bytes(avail + size_len + 4ull);
-                auto [p, to_chars_error] = std::to_chars(avail_bytes.data(), avail_bytes.data() + size_len, avail);
+                auto [p, to_chars_error] = std::to_chars(avail_bytes.data(), avail_bytes.data() + size_len, avail, 16);
+
                 *p = '\r';
                 *(p+1) = '\n';
 
@@ -217,7 +232,7 @@ namespace attender
                 *iter = '\n';
 
                 get_connection()->write(
-                    std::move(avail_bytes),
+                    /*std::move(avail_bytes)*/ avail_bytes,
                     [&prod, avail](auto ec)
                     {
                         if (!ec)
