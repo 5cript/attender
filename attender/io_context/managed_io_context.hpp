@@ -11,9 +11,10 @@ namespace attender
     class managed_io_context
     {
     public:
-        constexpr managed_io_context()
+        template <typename... Forwards>
+        constexpr managed_io_context(Forwards&&... args)
             : service_{}
-            , async_provider_{new AsyncModel{&service_}}
+            , async_provider_{new AsyncModel{&service_, std::forward <Forwards&&>(args)...}}
         {
             async_provider_->setup();
         }

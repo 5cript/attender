@@ -34,6 +34,11 @@ namespace attender
         void on_error(boost::system::error_code) override;
         void start_production() override;
 
+        /**
+         *  Indicate that data was produced and shall be written.
+         */
+        void flush();
+
         // requires container that has size(), begin() and end().
         template <typename T>
         friend streaming_producer& operator<<(streaming_producer& stream, T const& data)
