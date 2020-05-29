@@ -1,5 +1,7 @@
 #include "producer.hpp"
 
+#include <iostream>
+
 using namespace std::chrono_literals;
 
 namespace attender
@@ -48,8 +50,11 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void producer::has_consumed(std::size_t size)
     {
-        if (available() > 0)
-            produced_data();
+        if (available() > 0 && has_consumer_attached())
+        {
+            std::lock_guard <std::mutex> guard{on_produce_protect_};
+            on_produce_({});
+        }
         else
             consuming_.store(false);
     }

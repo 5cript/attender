@@ -107,7 +107,7 @@ namespace attender
          *  @param body A body to send.
          *  @param on_finish A callback function, that is called after the send operation finished.
          */
-        void send(std::istream& body, std::function <void()> const& on_finish = nop);
+        void send(std::istream& body, std::function <void()> const& on_finish = [](){});
 
         /**
          *  Sends the HTTP response. After a call to send, the status and header fiels

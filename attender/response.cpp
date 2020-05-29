@@ -20,7 +20,7 @@ namespace attender
      *  Trick to hide template in c++ file. So that tcp_connection.hpp is not required in the header.
      */
     template <typename T>
-    static void write(response_handler* res, std::shared_ptr <T> data, std::function <void()> cleanup = nop)
+    static void write(response_handler* res, std::shared_ptr <T> data, std::function <void()> cleanup = [](){})
     {
         res->send_header([res, data, cleanup](boost::system::error_code ec){
             // end the connection, on error
