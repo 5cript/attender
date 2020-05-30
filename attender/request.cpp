@@ -257,6 +257,16 @@ namespace attender
         return connection_->get_socket()->remote_endpoint().address().to_string();
     }
 //---------------------------------------------------------------------------------------------------------------------
+    std::string request_handler::ipv6Address() const
+    {
+        return std::string{"["} + connection_->get_socket()->remote_endpoint().address().to_v6().to_string() + "]:" + std::to_string(port());
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    unsigned short request_handler::port() const
+    {
+        return connection_->get_socket()->remote_endpoint().port();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     std::string request_handler::method() const
     {
         return header_.get_method();

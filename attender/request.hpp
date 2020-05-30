@@ -81,6 +81,14 @@ namespace attender
         std::string ip() const;
 
         /**
+         *  Contains the remote port address of the request.
+         *  This port is taken from the system.
+         *
+         *  @return remote port.
+         */
+        unsigned short port() const;
+
+        /**
          *  Returns a string corresponding to the HTTP method of the request: GET, POST, PUT, and so on.
          *
          *  @return request method / verb.
@@ -93,6 +101,12 @@ namespace attender
          *  @return request url.
          */
         std::string url() const;
+
+        /**
+         *  Returns ip and port in ipv6 format with port.
+         *  @returns An address in this format: [::1]:1234
+         */
+        std::string ipv6Address() const;
 
         /**
          *  Returns parsed path parameters by key.
