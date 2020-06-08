@@ -120,7 +120,11 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::flush()
     {
-        push(nullptr, 0, BROTLI_OPERATION_FLUSH);
+        do
+        {
+            push(nullptr, 0, BROTLI_OPERATION_FLUSH);
+        } while (avail_in_ != 0);
+        produced_data();
     }
 //---------------------------------------------------------------------------------------------------------------------
     void brotli_encoder::finish()

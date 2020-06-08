@@ -62,9 +62,9 @@ namespace attender
         }
 
         template <typename T>
-        friend std::enable_if_t <std::is_integral_v <T>, streaming_producer&> operator<<(streaming_producer& stream, T nullterminated)
+        friend std::enable_if_t <std::is_integral_v <T>, streaming_producer&> operator<<(streaming_producer& stream, T integral)
         {
-            return operator<<(stream, std::to_string(nullterminated));
+            return operator<<(stream, std::to_string(integral));
         }
 
         void buffer_locked_do(std::function <void()> const&) const override;

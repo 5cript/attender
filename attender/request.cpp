@@ -72,15 +72,7 @@ namespace attender
             {
                 header_ = parser_.get_header();
 
-                auto expect = header_.get_field("Expect");
-                if (expect && expect.get() == "100-continue")
-                {
-                    connection_->write("HTTP/1.1 100 Continue\r\n\r\n", [this](boost::system::error_code ec){
-                        on_parse_(ec, {});
-                    });
-                }
-                else
-                    on_parse_({}, {});
+                on_parse_({}, {});
             }
             catch (std::exception const& exc)
             {
@@ -89,6 +81,24 @@ namespace attender
             }
             // on_parse_ = {}; // frees shared_ptrs; TODO: FIXME?
         }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    bool request_handler::expects_continue() const
+    {
+        auto expect = header_.get_field("Expect");
+        return (expect && expect.get() == "100-continue");
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    bool request_handler::accept_and_continue(std::function <void(boost::system::error_code)> const& continuation)
+    {
+        if (expects_continue())
+        {
+            connection_->write("HTTP/1.1 100 Continue\r\n\r\n", [this, continuation](boost::system::error_code ec){
+                continuation(ec);
+            });
+            return true;
+        }
+        return false;
     }
 //---------------------------------------------------------------------------------------------------------------------
     void request_handler::set_parameters(std::unordered_map <std::string, std::string> const& params)
@@ -154,10 +164,9 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void request_handler::initialize_read(request_parser::buffer_size_type& max)
     {
-        //if (max == 0)
-            //max = std::numeric_limits <std::decay_t<decltype(max)>>::max();
-
         // rearrange the callback for body reading.
+        // SEGFAULT here? You are reading, but your connection is already closed.
+        // Please dont use the request object after sending or ending on response.
         connection_->set_read_callback([this](boost::system::error_code ec) {
             body_read_handler(ec);
         });
@@ -188,6 +197,17 @@ namespace attender
 
         // assign a sink, which prevails the asynchronous structure.
         sink_.reset(new tcp_string_sink(&str));
+
+        return body_read_start(max);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    callback_wrapper& request_handler::read_body(std::shared_ptr <tcp_read_sink> sink, size_type max)
+    {
+        // set handler and set reader maximum
+        initialize_read(max);
+
+        sink_.reset();
+        sink_ = sink;
 
         return body_read_start(max);
     }

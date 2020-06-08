@@ -3,6 +3,7 @@
 #include "tcp_fwd.hpp"
 #include "response_header.hpp"
 #include "cookie.hpp"
+#include "conclusion_observer.hpp"
 #include "encoding/producer.hpp"
 
 #include <atomic>
@@ -19,6 +20,11 @@ namespace attender
     public:
         explicit response_handler(tcp_connection_interface* connection) noexcept;
         ~response_handler();
+
+        /**
+         *  Creates an object that can be used to observe the lifetime of the object.
+         */
+        std::shared_ptr <conclusion_observer> observe_conclusion();
 
         /**
          *  Appends the specified value to the HTTP response header field.
@@ -208,8 +214,7 @@ namespace attender
         void set_cookie(cookie ck);
 
         /**
-         *  Returns whether or not sending or ending this is still possible.
-         *  Useful for mount returns.
+         *  Will return true if a header has already been sent.
          */
         bool has_concluded() const;
 
@@ -225,6 +230,7 @@ namespace attender
     private:
         tcp_connection_interface* connection_;
         response_header header_;
-        std::atomic_bool headerSent_;
+        std::atomic_bool header_sent_;
+        std::shared_ptr <conclusion_observer> observer_;
     };
 }

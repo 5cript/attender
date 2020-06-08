@@ -72,13 +72,15 @@ namespace attender
     response_handler::response_handler(tcp_connection_interface* connection) noexcept
         : connection_{connection}
         , header_{}
-        , headerSent_{false}
+        , header_sent_{false}
+        , observer_{}
     {
 
     }
 //---------------------------------------------------------------------------------------------------------------------
     response_handler::~response_handler()
     {
+        if (observer_) observer_->conclude();
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection_interface* response_handler::get_connection()
@@ -171,6 +173,12 @@ namespace attender
             status(204);
 
         write(this, std::make_shared <stream_keeper> (body), on_finish);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    std::shared_ptr <conclusion_observer> response_handler::observe_conclusion()
+    {
+        observer_ = std::make_shared <conclusion_observer>();
+        return observer_;
     }
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::send_chunked
@@ -271,13 +279,10 @@ namespace attender
             end();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    bool response_handler::has_concluded() const
-    {
-        return headerSent_.load();
-    }
-//---------------------------------------------------------------------------------------------------------------------
     void response_handler::end()
     {
+        if (observer_) observer_->conclude();
+
         send_header([this](boost::system::error_code){
             connection_->get_parent()->get_connections()->remove(connection_);
             // further use of this is invalid from here.
@@ -298,15 +303,22 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void response_handler::send_header(write_callback continuation)
     {
-        if (headerSent_.load() == false)
+        if (observer_) observer_->conclude();
+
+        if (header_sent_.load() == false)
         {
-            headerSent_.store(true);
+            header_sent_.store(true);
             connection_->write(header_.to_string(), continuation);
         }
         else
-        {
             continuation({});
-        }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    bool response_handler::has_concluded() const
+    {
+        if (observer_ && observer_->has_concluded())
+            return true;
+        return header_sent_.load();
     }
 //---------------------------------------------------------------------------------------------------------------------
     response_handler& response_handler::type(std::string const& mime, bool no_except)

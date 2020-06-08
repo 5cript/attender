@@ -68,6 +68,25 @@ namespace attender
         /// Flushes remaining data to output and completes the compression.
         void finish();
 
+        // requires data to have ".data()" and ".size()" and be convertible to char const*
+        template <typename T>
+        friend brotli_encoder& operator<<(brotli_encoder& stream, T const& data)
+        {
+            stream.push(data.data(), data.size());
+            return stream;
+        }
+
+        friend brotli_encoder& operator<<(brotli_encoder& stream, char const* nullterminated)
+        {
+            return operator<<(stream, std::string_view{nullterminated});
+        }
+
+        template <typename T>
+        friend std::enable_if_t <std::is_integral_v <T>, brotli_encoder&> operator<<(brotli_encoder& stream, T integral)
+        {
+            return operator<<(stream, std::to_string(integral));
+        }
+
     private:
         void shrink_input();
         void bufferize_input(char const* data_begin, std::size_t data_size);

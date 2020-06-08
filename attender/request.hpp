@@ -34,6 +34,22 @@ namespace attender
         request_header get_header() const;
 
         /**
+         *  In case of Expect 100 continue headers, write out a continue message if you want to continue and receive the body.
+         *
+         *  @param the function called after the write completes. Dont directly continue or you cannot technically be sure that,
+         *          the whole write completed before you continue using the connection.
+         *  @return returns false if no expect-continue header is present. CONTINUATION IS NOT CALLED.
+         */
+        bool accept_and_continue(std::function <void(boost::system::error_code)> const& continuation);
+
+        /**
+         *  Returns true if a "Expect: 100-continue" header entry is present.
+         *  Also use this if YOU (as server) want a 100 expect routine. Body reading is at your disposal after all and you can
+         *  chose to outright close and fail if the client bombards you.
+         */
+        bool expects_continue() const;
+
+        /**
          *  Reads tcp-stream contents to the provided sink (in this case an ostream).
          *  This stream must be kept alive until the read operation finishes and fullfill
          *  or except is called.
@@ -56,6 +72,16 @@ namespace attender
          *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
          */
         callback_wrapper& read_body(std::string& str, size_type max = 0);
+
+        /**
+         *  Reads tcp-stream contents to the provided sink (in this case a customary sink).
+         *
+         *  @warning Do not start multiple read operations at the same time! This will crash you!
+         *
+         *  @param sink A customary sink. The request will share the shared_ptr with you.
+         *  @param max The maximum amount of bytes to read. If max = 0, there is no limit.
+         */
+        callback_wrapper& read_body(std::shared_ptr <tcp_read_sink> sink, size_type max = 0);
 
         /**
          *  Returns the amount of total bytes read in the last read call that was issued.
