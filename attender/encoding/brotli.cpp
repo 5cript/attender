@@ -3,6 +3,7 @@
 #include <brotli/encode.h>
 
 #include <iostream>
+#include <cstring>
 
 using namespace std::string_literals;
 
