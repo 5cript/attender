@@ -18,6 +18,11 @@ namespace attender
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void tcp_server::add_accept_handler(accept_callback <boost::asio::ip::tcp::socket> const& on_accept)
+    {
+        on_accept_ = on_accept;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void tcp_server::do_accept()
     {
         acceptor_.async_accept(socket_,
@@ -43,21 +48,25 @@ namespace attender
                     req->initiate_header_read(
                         [this, res, req, connection](boost::system::error_code ec, std::exception const& exc)
                         {
+                            auto clearConnection = [this, connection]()
+                            {
+                                connections_.remove(connection);
+                            };
+
                             // socket closed
                             if (ec.value() == 2)
-                                return;
+                                return clearConnection();
 
                             if (ec == boost::asio::error::operation_aborted)
-                                return;
+                                return clearConnection();
 
                             if (ec)
                             {
                                 on_error_(connection, ec, exc);
                                 if (ec.value() == boost::system::errc::protocol_error)
-                                    connection->get_response_handler().send_status(400);
+                                    return (void)connection->get_response_handler().send_status(400);
                                 else
-                                    connections_.remove(connection);
-                                return;
+                                    return clearConnection();
                             }
 
                             // finished header parsing.
@@ -75,16 +84,14 @@ namespace attender
                                 else if (on_missing_handler_)
                                     on_missing_handler_(req, res);
                                 else
-                                {
                                     res->send_status(404);
-                                }
                             }
                         }
                     );
                 }
                 else if (ec)
                 {
-                    // TODO...
+                    on_error_(nullptr, ec, {});
                 }
 
                 do_accept();

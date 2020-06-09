@@ -20,6 +20,11 @@ namespace attender
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void tcp_secure_server::add_accept_handler(accept_callback <socket_type> const& on_accept)
+    {
+        on_accept_ = on_accept;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void tcp_secure_server::do_accept()
     {
         socket_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(*service_, *context_->get_ssl_context()));
@@ -55,12 +60,17 @@ namespace attender
                                 req->initiate_header_read(
                                     [this, res, req, connection](boost::system::error_code ec, std::exception const& exc)
                                     {
+                                        auto clearConnection = [this, connection]()
+                                        {
+                                            connections_.remove(connection);
+                                        };
+
                                         // socket closed
                                         if (ec.value() == 2)
-                                            return;
+                                            return clearConnection();
 
                                         if (ec == boost::asio::error::operation_aborted)
-                                            return;
+                                            return clearConnection();
 
                                         // some other error
                                         if (ec)

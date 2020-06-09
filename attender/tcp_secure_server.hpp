@@ -23,6 +23,12 @@ namespace attender
                           settings setting = {});
         ~tcp_secure_server() = default;
 
+        /**
+         *  Add handler that is called when an incomming connection is accepted.
+         *  Return false here in the handler to not continue with request handling.
+         */
+        void add_accept_handler(accept_callback <socket_type> const& on_accept);
+
     protected:
         void do_accept() override;
 

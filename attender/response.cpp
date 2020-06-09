@@ -81,6 +81,7 @@ namespace attender
     response_handler::~response_handler()
     {
         if (observer_) observer_->conclude();
+        std::cout << "got killed\n";
     }
 //---------------------------------------------------------------------------------------------------------------------
     tcp_connection_interface* response_handler::get_connection()
