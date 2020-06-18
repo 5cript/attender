@@ -178,6 +178,8 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     std::shared_ptr <conclusion_observer> response_handler::observe_conclusion()
     {
+        if (observer_)
+            return observer_;
         observer_ = std::make_shared <conclusion_observer>();
         return observer_;
     }
@@ -192,16 +194,22 @@ namespace attender
         try_set("Content-Encoding", prod.encoding());
         set("Transfer-Encoding", "chunked");
 
-        write_header_for_chunked(this, [this, &prod, on_finish](auto)
+        write_header_for_chunked(this, [concl=std::shared_ptr <conclusion_observer>{observe_conclusion()}, this, &prod, on_finish](auto)
         {
             // header is sent, now send chunked data.
             std::function <void(std::string const& err)> on_produce;
-            on_produce = [this, &prod, on_finish, on_produce](std::string const& err)
+            on_produce = [this, concl, &prod, on_produce](std::string const& err)
             {
+                if (concl->has_concluded())
+                {
+                    prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
+                    return;
+                }
+
                 if (!err.empty())
                 {
-                    this->get_connection()->write("0\r\n\r\n"s, [this, on_finish](boost::system::error_code ec) {
-                        on_finish(ec);
+                    this->get_connection()->write("0\r\n\r\n"s, [this, &prod](boost::system::error_code ec) {
+                        prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
                         this->end();
                     });
                     return;
@@ -209,8 +217,8 @@ namespace attender
 
                 if (prod.complete())
                 {
-                    this->get_connection()->write("0\r\n\r\n"s, [this, on_finish](boost::system::error_code ec) {
-                        on_finish(ec);
+                    this->get_connection()->write("0\r\n\r\n"s, [this, &prod](boost::system::error_code ec) {
+                        prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
                         this->end();
                     });
                     return;

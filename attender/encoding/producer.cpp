@@ -92,6 +92,11 @@ namespace attender
         on_produce_(fail);
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void producer::test_alive()
+    {
+        produced_data();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     bool producer::wait_for_consumer(std::chrono::milliseconds timeout) const
     {
         auto start_time = std::chrono::high_resolution_clock::now();

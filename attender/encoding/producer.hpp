@@ -107,6 +107,11 @@ namespace attender
         virtual void end_production(boost::system::error_code);
 
         /**
+         *  Can be used to produce 0 data and test the connection health.
+         */
+        void test_alive();
+
+        /**
          *  Set a callback for when new data is available.
          */
         void set_on_produce_cb(std::function <void(std::string const& err)> cb);
