@@ -23,14 +23,13 @@ namespace attender
         session_manager(std::unique_ptr <session_storage_interface> session_storage);
 
         template <typename SessionT>
-        session_state load_session(std::string const& session_cookie_name, SessionT& session, request_handler* req)
+        session_state load_session(std::string const& session_cookie_name, SessionT* session, request_handler* req)
         {
             auto opt = req->get_cookie_value(session_cookie_name);
             if (!opt)
                 return session_state::no_session;
             else
             {
-                std::string DELME = opt.get();
                 auto sessionFound = session_storage_->get_session(opt.get(), session);
                 if (!sessionFound)
                     return session_state::not_found;
@@ -42,6 +41,11 @@ namespace attender
         SessionT make_session()
         {
             return SessionT{session_storage_->create_session()};
+        }
+
+        void make_session()
+        {
+            session_storage_->create_session();
         }
 
         template <typename SessionT>

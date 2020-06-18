@@ -2,12 +2,14 @@
 
 #include "tcp_fwd.hpp"
 #include "mounting.hpp"
+#include "session/session_manager.hpp"
 
 #include <regex>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <memory>
 
 #include <boost/optional.hpp>
 
@@ -79,10 +81,18 @@ namespace attender
             int priority = -100
         );
 
+        void add_session_manager
+        (
+            std::shared_ptr <session_manager> session_storage,
+            std::string const& id_cookie_key
+        );
+
         boost::optional <route> find_route(request_header const& header, match_result& match_level) const;
 
     private:
         std::multimap <int, route, std::greater<int>> routes_;
+        std::shared_ptr <session_manager> sessions_;
+        std::string id_cookie_key_;
     };
 //#####################################################################################################################
 }

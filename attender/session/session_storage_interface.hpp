@@ -39,10 +39,10 @@ namespace attender
          *  Get a session from the storage.
          *
          *  @param id The session id.
-         *  @param data [out] Some sort of session.
+         *  @param session [out] Some sort of session. Is ignored if session is nullptr
          *  @return Returns whether the session exists or not.
          **/
-        virtual bool get_session(std::string const& id, session& session) = 0;
+        virtual bool get_session(std::string const& id, session* session) = 0;
 
         /**
          *  Get a session from the storage.

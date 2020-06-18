@@ -13,10 +13,13 @@ namespace attender
     class thread_pooler : public async_model
     {
     public:
-        thread_pooler(asio::io_service* context,
-                      std::size_t thread_count = std::thread::hardware_concurrency() == 0
-                                                 ? 4
-                                                 : std::thread::hardware_concurrency()
+        thread_pooler
+        (
+            asio::io_service* context,
+            std::size_t thread_count =
+                std::thread::hardware_concurrency() == 0 ? 4 : std::thread::hardware_concurrency(),
+            std::function <void()> initAction = [](){},
+            std::function <void(std::exception const&)> exceptAction = [](auto const&){}
         );
 
         ~thread_pooler();
@@ -31,5 +34,7 @@ namespace attender
         std::size_t thread_count_;
         std::mutex thread_pool_lock_;
         std::unique_ptr <boost::asio::io_service::work> work_;
+        std::function <void()> initAction_;
+        std::function <void(std::exception const&)> exceptAction_;
     };
 }

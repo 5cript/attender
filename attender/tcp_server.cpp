@@ -75,7 +75,8 @@ namespace attender
                             if (maybeRoute)
                             {
                                 req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().get_path()));
-                                maybeRoute.get().get_callback()(req, res);
+                                if (handle_session(req, res))
+                                    maybeRoute.get().get_callback()(req, res);
                             }
                             else
                             {

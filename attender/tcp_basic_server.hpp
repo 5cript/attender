@@ -7,6 +7,9 @@
 #include "router.hpp"
 #include "settings.hpp"
 #include "session/session_cookie_generator_interface.hpp"
+#include "session/session_manager.hpp"
+#include "session/session_storage_interface.hpp"
+#include "session/authorizer_interface.hpp"
 
 namespace attender
 {
@@ -51,6 +54,17 @@ namespace attender
          *  Returns a copy of the server settings.
          */
         settings get_settings() const override;
+
+        /**
+         *  After calling this function, every single request is checked for an active authorized session.
+         *  Authorization can be performed on any request.
+         */
+        void install_session_control
+        (
+            std::unique_ptr <session_storage_interface>&& session_storage,
+            std::unique_ptr <authorizer_interface>&& authorizer,
+            std::string const& id_cookie_key
+        );
 
         /**
          *  Will add a routing for get requests.
@@ -124,6 +138,12 @@ namespace attender
         connection_manager* get_connections() override;
 
         /**
+         *  Returns session manager, if one was installed.
+         *  Do note, that installing one isn't required.
+         */
+        session_manager* get_session_manager();
+
+        /**
          *  mounts a path on the local system, so it can be accessed by http requests.
          *  Any requests on that path will result in corresponding actions that can be enabled or disabled.
          *
@@ -161,6 +181,11 @@ namespace attender
     protected:
         virtual void do_accept() = 0;
 
+        /**
+         *  Returns false if session is unauthorized to proceed.
+         */
+        bool handle_session(request_handler* req, response_handler* res);
+
     protected:
         // asio stuff
         asio::io_service* service_;
@@ -176,5 +201,10 @@ namespace attender
         // callbacks
         error_callback on_error_;
         missing_handler_callback on_missing_handler_;
+
+        // session
+        std::shared_ptr <session_manager> sessions_;
+        std::shared_ptr <authorizer_interface> authorizer_;
+        std::string id_cookie_key_;
     };
 }

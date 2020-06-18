@@ -3,12 +3,20 @@
 namespace attender
 {
 //#####################################################################################################################
-    thread_pooler::thread_pooler(asio::io_service* context, std::size_t thread_count)
+    thread_pooler::thread_pooler
+    (
+        asio::io_service* context,
+        std::size_t thread_count,
+        std::function <void()> initAction,
+        std::function <void(std::exception const&)> exceptAction
+    )
         : async_model{}
         , context_{context}
         , threads_{}
         , thread_count_{thread_count}
         , work_{nullptr}
+        , initAction_{std::move(initAction)}
+        , exceptAction_{std::move(exceptAction)}
     {
 
     }
@@ -28,7 +36,22 @@ namespace attender
         {
             threads_.push_back(std::thread{
                 [this]{
-                    context_->run();
+                    if (initAction_)
+                        initAction_();
+                    try
+                    {
+                        context_->run();
+                    }
+                    catch(std::exception const& exc)
+                    {
+                        if (exceptAction_)
+                            exceptAction_(exc);
+                    }
+                    catch(...)
+                    {
+                        if (exceptAction_)
+                            exceptAction_(std::runtime_error{"some unknown exception was caught to prevent thread crash to kill program"});
+                    }
                 }
             });
         }

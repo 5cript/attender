@@ -150,6 +150,16 @@ namespace attender
         return callback_;
     }
 //#####################################################################################################################
+    void request_router::add_session_manager
+    (
+        std::shared_ptr <session_manager> session_manager,
+        std::string const& id_cookie_key
+    )
+    {
+        sessions_ = session_manager;
+        id_cookie_key_ = id_cookie_key;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void request_router::add_route(std::string const& method, std::string const& path_template, connected_callback const& callback, int priority)
     {
         add_route({method, path_template, callback}, priority);
