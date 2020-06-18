@@ -77,18 +77,9 @@ namespace attender
         if (!sessions_)
             return true;
 
-        auto maybeId = req->get_cookie_value(id_cookie_key_);
-        if (maybeId)
-            std::cout << "session cookie set as: " << maybeId.value() << "\n";
-        else
-            std::cout << "no cookie set\n";
-
         auto state = sessions_->load_session <attender::session>(id_cookie_key_, nullptr, req);
         if (state == session_state::live)
-        {
-            std::cout << "session is live!\n";
             return true;
-        }
 
         auto observer = res->observe_conclusion();
         auto result = authorizer_->try_perform_authorization(req, res);
@@ -103,8 +94,6 @@ namespace attender
                 id
             };
             c.set_path("/");
-
-            std::cout << "making session: " << id << "\n";
             res->set_cookie(c);
             req->patch_cookie(id_cookie_key_, id);
             return true;
