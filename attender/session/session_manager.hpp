@@ -43,9 +43,9 @@ namespace attender
             return SessionT{session_storage_->create_session()};
         }
 
-        void make_session()
+        std::string make_session()
         {
-            session_storage_->create_session();
+            return session_storage_->create_session();
         }
 
         template <typename SessionT>

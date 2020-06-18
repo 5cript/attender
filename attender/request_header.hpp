@@ -52,6 +52,7 @@ namespace attender
         void parse_query(std::string const& query);
         void parse_url();
         std::string decode_url(std::string const& encoded);
+        void patch_cookie(std::string const& key, std::string const& value);
 
     private:
         std::string method_;

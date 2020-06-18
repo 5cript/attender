@@ -101,11 +101,21 @@ namespace attender
             }
             case(authorization_result::allowed_continue):
             {
-                sessions_->make_session();
+                auto id = sessions_->make_session();
+                res->set_cookie(cookie{
+                    id_cookie_key_,
+                    id
+                });
+                req->patch_cookie(id_cookie_key_, id);
                 return true;
             }
             case(authorization_result::allowed_but_stop):
             {
+                auto id = sessions_->make_session();
+                res->set_cookie(cookie{
+                    id_cookie_key_,
+                    id
+                });
                 if (!observer->has_concluded())
                     res->status(204).end();
                 return false;

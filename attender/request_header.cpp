@@ -61,6 +61,11 @@ namespace attender
             return boost::none;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void request_header::patch_cookie(std::string const& key, std::string const& value)
+    {
+        cookies_[key] = value;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     request_header::request_header(request_header_intermediate const& intermediate)
         : method_{intermediate.method}
         , url_{intermediate.url}

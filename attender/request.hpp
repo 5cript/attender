@@ -191,6 +191,9 @@ namespace attender
         void header_read_handler(boost::system::error_code ec);
         void body_read_handler(boost::system::error_code ec);
 
+        // server session handling
+        void patch_cookie(std::string const& key, std::string const& value);
+
     private:
         // internals
         request_parser::buffer_size_type get_content_length() const;

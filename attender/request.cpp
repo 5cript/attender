@@ -306,6 +306,11 @@ namespace attender
         return parm->second;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void request_handler::patch_cookie(std::string const& key, std::string const& value)
+    {
+        header_.patch_cookie(key, value);
+    }
+//---------------------------------------------------------------------------------------------------------------------
     std::string request_handler::path() const
     {
         return header_.get_path();
