@@ -1,5 +1,7 @@
 #include "streaming_producer.hpp"
 
+#include <iostream>
+
 namespace attender
 {
 //#####################################################################################################################
@@ -13,7 +15,6 @@ namespace attender
         , encoding_{std::move(encoding)}
         , on_ready_{std::move(on_ready)}
         , on_error_{std::move(on_error)}
-        , avail_{0}
         , completed_{false}
     {
     }
@@ -36,7 +37,8 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     std::size_t streaming_producer::available() const
     {
-        return avail_.load();
+        std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
+        return buffer_.size();
     }
 //---------------------------------------------------------------------------------------------------------------------
     char const* streaming_producer::data() const
@@ -51,9 +53,11 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void streaming_producer::has_consumed(std::size_t size)
     {
-        avail_.store(avail_.load() - size);
         std::lock_guard <std::recursive_mutex> guard{buffer_saver_};
-        buffer_.erase(buffer_.begin(), buffer_.begin() + size);
+        if (buffer_.size() < size)
+            buffer_.clear();
+        else
+            buffer_.erase(buffer_.begin(), buffer_.begin() + size);
 
         producer::has_consumed(size);
     }

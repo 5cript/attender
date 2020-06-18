@@ -25,6 +25,19 @@ namespace attender
             //std::cout << "secure connection died\n";
         }
 
+        boost::system::error_code wait_write() override
+        {
+            boost::system::error_code ec;
+            socket_->lowest_layer().wait(boost::asio::ip::tcp::socket::wait_write, ec);
+            return ec;
+        }
+        boost::system::error_code wait_read() override
+        {
+            boost::system::error_code ec;
+            socket_->lowest_layer().wait(boost::asio::ip::tcp::socket::wait_read, ec);
+            return ec;
+        }
+
         void shutdown() override;
 
         ssl_socket_type* get_secure_socket();

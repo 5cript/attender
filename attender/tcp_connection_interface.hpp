@@ -22,6 +22,7 @@ namespace attender
 
         // reading
         virtual void read() = 0;
+        virtual boost::system::error_code wait_read() = 0;
 
         // writing
         virtual void write(std::istream& stream, write_callback handler) = 0;
@@ -29,6 +30,7 @@ namespace attender
         virtual void write(std::vector <char> const& container, write_callback handler) = 0;
         virtual void write(std::vector <char>&& eol_container, write_callback handler) = 0;
         virtual std::size_t ready_count() const = 0;
+        virtual boost::system::error_code wait_write() = 0;
 
         // buffer
         virtual buffer_iterator begin() const = 0;

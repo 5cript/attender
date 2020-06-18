@@ -50,28 +50,29 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void producer::has_consumed(std::size_t size)
     {
-        if (available() > 0 && has_consumer_attached())
+        if (available() > 0)
         {
-            std::lock_guard <std::mutex> guard{on_produce_protect_};
-            on_produce_({});
+            //std::lock_guard <std::recursive_mutex> guard{on_produce_protect_};
+            if (on_produce_)
+                on_produce_({}, false);
         }
         else
             consuming_.store(false);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void producer::set_on_produce_cb(std::function <void(std::string const& err)> cb)
+    void producer::set_on_produce_cb(std::function <void(std::string const& err, bool)> cb)
     {
-        std::lock_guard <std::mutex> guard{on_produce_protect_};
-        on_produce_ = [this, cb{std::move(cb)}](std::string const& err)
+        std::lock_guard <std::recursive_mutex> guard{on_produce_protect_};
+        on_produce_ = [this, cb{std::move(cb)}](std::string const& err, bool control)
         {
             consuming_.store(true);
-            cb(err);
+            cb(err, control);
         };
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool producer::has_consumer_attached() const
     {
-        std::lock_guard <std::mutex> guard{on_produce_protect_};
+        std::lock_guard <std::recursive_mutex> guard{on_produce_protect_};
         return on_produce_.operator bool();
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -82,19 +83,14 @@ namespace attender
 
         if (has_consumer_attached())
         {
-            std::lock_guard <std::mutex> guard{on_produce_protect_};
-            on_produce_({});
+            std::lock_guard <std::recursive_mutex> guard{on_produce_protect_};
+            on_produce_({}, false);
         }
     }
 //---------------------------------------------------------------------------------------------------------------------
     void producer::production_failure(std::string const& fail)
     {
-        on_produce_(fail);
-    }
-//---------------------------------------------------------------------------------------------------------------------
-    void producer::test_alive()
-    {
-        produced_data();
+        on_produce_(fail, false);
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool producer::wait_for_consumer(std::chrono::milliseconds timeout) const
@@ -112,6 +108,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void producer::end_production(boost::system::error_code ec)
     {
+        std::lock_guard <std::recursive_mutex> guard{on_produce_protect_};
         on_produce_ = {};
         on_finish_(ec);
     }

@@ -16,9 +16,9 @@ namespace attender
     class producer
     {
     private:
-        std::function <void(std::string const& err)> on_produce_{};
+        std::function <void(std::string const& err, bool)> on_produce_{};
         std::function <void(boost::system::error_code)> on_finish_{};
-        mutable std::mutex on_produce_protect_{};
+        mutable std::recursive_mutex on_produce_protect_{};
 
     protected:
         std::atomic_bool consuming_{false};
@@ -107,13 +107,8 @@ namespace attender
         virtual void end_production(boost::system::error_code);
 
         /**
-         *  Can be used to produce 0 data and test the connection health.
-         */
-        void test_alive();
-
-        /**
          *  Set a callback for when new data is available.
          */
-        void set_on_produce_cb(std::function <void(std::string const& err)> cb);
+        void set_on_produce_cb(std::function <void(std::string const& err, bool)> cb);
     };
 }

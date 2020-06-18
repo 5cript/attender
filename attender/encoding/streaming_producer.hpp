@@ -50,8 +50,6 @@ namespace attender
             stream.buffer_.resize(stream.buffer_.size() + data.size());
             std::copy(std::begin(data), std::end(data), std::end(stream.buffer_) - data.size());
 
-            stream.avail_.store(stream.avail_.load() + data.size());
-
             stream.produced_data();
             return stream;
         }
@@ -79,7 +77,6 @@ namespace attender
         std::string encoding_;
         std::function <void()> on_ready_;
         std::function <void(boost::system::error_code)> on_error_;
-        std::atomic <std::size_t> avail_;
         std::atomic_bool completed_;
         mutable std::recursive_mutex buffer_saver_;
     };

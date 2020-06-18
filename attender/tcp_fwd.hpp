@@ -36,7 +36,7 @@ namespace attender
     // callback for functions with error code
     using custom_callback = std::function <void(boost::system::error_code /* ec */)>;
     using read_callback = custom_callback;
-    using write_callback = custom_callback;
+    using write_callback = std::function <void(boost::system::error_code /* ec */, std::size_t amount)>;
     using parse_callback = std::function <void(boost::system::error_code /* ec */, std::exception const& /*exc*/)>;
     using error_callback = std::function <void(tcp_connection_interface* /*connection*/, boost::system::error_code /*ec*/, std::exception const& /* exc */)>;
 

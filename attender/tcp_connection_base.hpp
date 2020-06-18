@@ -162,9 +162,9 @@ namespace attender
             std::copy(begin, end, write_buffer_.begin());
 
             boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer_),
-                [this, handler](boost::system::error_code ec, std::size_t)
+                [this, handler](boost::system::error_code ec, std::size_t amount)
                 {
-                    handler(ec);
+                    handler(ec, amount);
                 }
             );
         }
@@ -181,9 +181,9 @@ namespace attender
             (
                 *socket_,
                 boost::asio::buffer(write_buffer_),
-                [this, handler](boost::system::error_code ec, std::size_t s)
+                [this, handler](boost::system::error_code ec, std::size_t amount)
                 {
-                    handler(ec);
+                    handler(ec, amount);
                 }
             );
         }
@@ -211,30 +211,28 @@ namespace attender
             if (stream.gcount() != 0)
             {
                 boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer_),
-                    [this, cb{handler}, &stream](boost::system::error_code ec, std::size_t)
+                    [this, cb{handler}, &stream](boost::system::error_code ec, std::size_t amount)
                     {
                         if (!ec)
                         {
                             if (stream.gcount() == config::buffer_size)
                                 write(stream, cb);
                             else
-                                cb(ec);
+                                cb(ec, amount);
                         }
                         else
                         {
                             // If you crash in here your connection is already dead.
                             // The error message is something like "write on shutdown connection" or
                             // "ssl_writer_interal:protocol is shutdown". Do NOT! use send/send_file/end multiple times.
-                            // The library has no means of telling if a connection is destroyed or not. The very check itself requires
-                            // a lively connection.
-                            cb(ec);
+                            cb(ec, amount);
                         }
                     }
                 );
             }
             else
             {
-                handler({});
+                handler({}, 0);
             }
         }
 

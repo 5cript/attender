@@ -22,7 +22,7 @@ namespace attender
     template <typename T>
     static void write(response_handler* res, std::shared_ptr <T> data, std::function <void()> cleanup = [](){})
     {
-        res->send_header([res, data, cleanup](boost::system::error_code ec){
+        res->send_header([res, data, cleanup](boost::system::error_code ec, std::size_t){
             // end the connection, on error
             if (ec)
             {
@@ -31,7 +31,7 @@ namespace attender
                 return;
             }
 
-            res->get_connection()->write(*data, [res, cleanup]([[maybe_unused]] boost::system::error_code ec){
+            res->get_connection()->write(*data, [res, cleanup]([[maybe_unused]] boost::system::error_code ec, std::size_t){
                 // end no matter what.
                 cleanup();
                 res->end();
@@ -46,7 +46,7 @@ namespace attender
         T&& on_header_sent
     )
     {
-        res->send_header([res, on_header_sent{std::forward <T&&>(on_header_sent)}](boost::system::error_code ec) {
+        res->send_header([res, on_header_sent{std::forward <T&&>(on_header_sent)}](boost::system::error_code ec, std::size_t) {
             // end the connection, on error
             if (ec)
             {
@@ -80,7 +80,7 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     response_handler::~response_handler()
     {
-        if (observer_) observer_->conclude();
+        if (observer_) observer_->has_died();
         //std::cout << "got killed\n";
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -197,10 +197,10 @@ namespace attender
         write_header_for_chunked(this, [concl=std::shared_ptr <conclusion_observer>{observe_conclusion()}, this, &prod, on_finish](auto)
         {
             // header is sent, now send chunked data.
-            std::function <void(std::string const& err)> on_produce;
-            on_produce = [this, concl, &prod, on_produce](std::string const& err)
+            std::function <void(std::string const& err, bool)> on_produce;
+            on_produce = [this, concl, &prod, on_produce](std::string const& err, bool control_call)
             {
-                if (concl->has_concluded())
+                if (!concl->is_alive())
                 {
                     prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
                     return;
@@ -208,7 +208,7 @@ namespace attender
 
                 if (!err.empty())
                 {
-                    this->get_connection()->write("0\r\n\r\n"s, [this, &prod](boost::system::error_code ec) {
+                    this->get_connection()->write("0\r\n\r\n"s, [this, &prod](boost::system::error_code ec, std::size_t) {
                         prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
                         this->end();
                     });
@@ -217,7 +217,7 @@ namespace attender
 
                 if (prod.complete())
                 {
-                    this->get_connection()->write("0\r\n\r\n"s, [this, &prod](boost::system::error_code ec) {
+                    this->get_connection()->write("0\r\n\r\n"s, [this, &prod](boost::system::error_code ec, std::size_t) {
                         prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
                         this->end();
                     });
@@ -250,11 +250,22 @@ namespace attender
 
                 get_connection()->write(
                     /*std::move(avail_bytes)*/ avail_bytes,
-                    [&prod, avail](auto ec)
+                    [&prod, avail](auto ec, auto amount)
                     {
                         if (!ec)
+                        {
+                            /*
+                            if (amount < avail)
+                            {
+                                prod.on_error(ec);
+                                prod.end_production(ec);
+                                return;
+                            }
+                            */
                             prod.has_consumed(avail);
-                        else {
+                        }
+                        else
+                        {
                             prod.on_error(ec);
                             prod.end_production(ec);
                         }
@@ -292,7 +303,7 @@ namespace attender
     {
         if (observer_) observer_->conclude();
 
-        send_header([this](boost::system::error_code){
+        send_header([this](boost::system::error_code, std::size_t){
             connection_->get_parent()->get_connections()->remove(connection_);
             // further use of this is invalid from here.
         });
@@ -320,7 +331,7 @@ namespace attender
             connection_->write(header_.to_string(), continuation);
         }
         else
-            continuation({});
+            continuation({}, 0);
     }
 //---------------------------------------------------------------------------------------------------------------------
     bool response_handler::has_concluded() const
