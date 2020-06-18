@@ -39,7 +39,7 @@ namespace attender
             if (iter == std::end(sessions_))
                 return false;
             if (session != nullptr)
-                *session = iter->second;
+                *static_cast <SessionT*> (session) = iter->second;
             return true;
         }
         bool set_session(std::string const& id, session const& session) override
