@@ -83,6 +83,8 @@ namespace attender
          **/
         cookie& set_max_age(uint64_t age);
 
+        cookie& set_same_site(std::string const& same_site);
+
         /**
          *  Returns the cookie name.
          **/
@@ -118,6 +120,8 @@ namespace attender
          **/
         uint64_t get_max_age() const;
 
+        std::string get_same_site() const;
+
         /**
          *  Creates a set cookie string.
          **/
@@ -128,6 +132,7 @@ namespace attender
         std::string value_;
         std::string domain_; // empty means not set
         std::string path_; // empty means not set
+        std::string same_site_;
         boost::optional <date> expires_;
         uint64_t max_age_; // 0 = not set
         bool secure_;

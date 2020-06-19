@@ -11,6 +11,7 @@ namespace attender
         , value_{}
         , domain_{}
         , path_{}
+        , same_site_{}
         , expires_{}
         , max_age_{0}
         , secure_{}
@@ -24,6 +25,7 @@ namespace attender
         , value_{value}
         , domain_{}
         , path_{}
+        , same_site_{}
         , expires_{}
         , max_age_{0}
         , secure_{}
@@ -111,6 +113,12 @@ namespace attender
         return *this;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    cookie& cookie::set_same_site(std::string const& same_site)
+    {
+        same_site_ = same_site;
+        return *this;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     std::string cookie::get_name() const
     {
         return name_;
@@ -146,6 +154,11 @@ namespace attender
         return max_age_;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    std::string cookie::get_same_site() const
+    {
+        return same_site_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     std::string cookie::to_set_cookie_string() const
     {
         std::stringstream sstr;
@@ -155,6 +168,8 @@ namespace attender
             sstr << "; Domain=" << domain_;
         if (!path_.empty())
             sstr << "; Path=" << path_;
+        if (!same_site_.empty())
+            sstr << "; SameSite=" << same_site_;
         if (max_age_ > 0)
             sstr << "; Max-Age=" << max_age_;
         if (expires_)

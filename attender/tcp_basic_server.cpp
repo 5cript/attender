@@ -58,13 +58,19 @@ namespace attender
     (
         std::unique_ptr <session_storage_interface>&& session_storage,
         std::unique_ptr <authorizer_interface>&& authorizer,
-        std::string const& id_cookie_key
+        std::string const& id_cookie_key,
+        bool allowOptionsUnauthorized,
+        cookie const& cookie_base,
+        std::function <void(request_handler*, response_handler*)> authorization_conditioner
     )
     {
         id_cookie_key_ = id_cookie_key;
         sessions_ = std::make_shared <session_manager>(std::move(session_storage));
         authorizer_ = std::shared_ptr <authorizer_interface>(authorizer.release());
+        authorization_conditioner_ = authorization_conditioner;
         router_.add_session_manager(sessions_, id_cookie_key_);
+        allowOptionsUnauthorized_ = allowOptionsUnauthorized;
+        cookie_base_ = cookie_base;
     }
 //---------------------------------------------------------------------------------------------------------------------
     session_manager* tcp_basic_server::get_session_manager()
@@ -81,6 +87,12 @@ namespace attender
         if (state == session_state::live)
             return true;
 
+        if (allowOptionsUnauthorized_ && req->method() == "OPTIONS")
+            return true;
+
+        if (authorization_conditioner_)
+            authorization_conditioner_(req, res);
+
         auto observer = res->observe_conclusion();
         auto result = authorizer_->try_perform_authorization(req, res);
         if (observer->has_concluded())
@@ -89,10 +101,9 @@ namespace attender
         auto make_session = [this, res, req]()
         {
             auto id = sessions_->make_session();
-            cookie c {
-                id_cookie_key_,
-                id
-            };
+            cookie c = cookie_base_;
+            c.set_name(id_cookie_key_);
+            c.set_value(id);
             c.set_path("/");
             res->set_cookie(c);
             req->patch_cookie(id_cookie_key_, id);
