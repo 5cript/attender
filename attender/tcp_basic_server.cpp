@@ -244,7 +244,7 @@ namespace attender
                     if (settings_.expose_exception)
                         res->status(500).send(exc.what());
                     else
-                        res->status(500);
+                        res->status(500).end();
                 }
                 catch(...)
                 {
