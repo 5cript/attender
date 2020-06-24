@@ -38,6 +38,15 @@ namespace attender
         }
 
         template <typename SessionT>
+        session_state load_session(std::string const& id, SessionT* session)
+        {
+            auto sessionFound = session_storage_->get_session(id, session);
+            if (!sessionFound)
+                return session_state::not_found;
+            return session_state::live;
+        }
+
+        template <typename SessionT>
         SessionT make_session()
         {
             return SessionT{session_storage_->create_session()};

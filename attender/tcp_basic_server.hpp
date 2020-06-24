@@ -76,6 +76,11 @@ namespace attender
         );
 
         /**
+         *  Retrieve a weak ptr to the session manager.
+         */
+        std::weak_ptr <session_manager> get_installed_session_manager();
+
+        /**
          *  Will add a routing for get requests.
          *
          *  @param path_template A template for paths. These templates will be parsed and if a match occurs in a request, the routing will be used.
@@ -194,6 +199,8 @@ namespace attender
          *  Returns false if session is unauthorized to proceed.
          */
         bool handle_session(request_handler* req, response_handler* res);
+
+        void header_read_handler(request_handler* req, response_handler* res, tcp_connection_interface* connection, boost::system::error_code ec, std::exception const& exc);
 
     protected:
         // asio stuff

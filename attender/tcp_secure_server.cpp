@@ -60,49 +60,7 @@ namespace attender
                                 req->initiate_header_read(
                                     [this, res, req, connection](boost::system::error_code ec, std::exception const& exc)
                                     {
-                                        auto clearConnection = [this, connection]()
-                                        {
-                                            connections_.remove(connection);
-                                        };
-
-                                        // socket closed
-                                        if (ec.value() == 2)
-                                            return clearConnection();
-
-                                        if (ec == boost::asio::error::operation_aborted)
-                                            return clearConnection();
-
-                                        // some other error
-                                        if (ec)
-                                        {
-                                            on_error_(connection, ec, exc);
-                                            if (ec.value() == boost::system::errc::protocol_error)
-                                                connection->get_response_handler().send_status(400);
-                                            else
-                                                connections_.remove(connection);
-                                            return;
-                                        }
-
-                                        // finished header parsing.
-                                        match_result best_match;
-                                        auto maybeRoute = router_.find_route(req->get_header(), best_match);
-                                        if (maybeRoute)
-                                        {
-                                            req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().get_path()));
-                                            if (handle_session(req, res))
-                                                maybeRoute.get().get_callback()(req, res);
-                                        }
-                                        else
-                                        {
-                                            if (best_match == match_result::path_match)
-                                                res->send_status(405);
-                                            else if (on_missing_handler_)
-                                                on_missing_handler_(req, res);
-                                            else
-                                            {
-                                                res->send_status(404);
-                                            }
-                                        }
+                                        header_read_handler(req, res, connection, ec, exc);
                                     }
                                 );
                             }

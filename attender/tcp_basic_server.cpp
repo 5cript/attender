@@ -73,6 +73,13 @@ namespace attender
         cookie_base_ = cookie_base;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    std::weak_ptr <session_manager> tcp_basic_server::get_installed_session_manager()
+    {
+        if (!sessions_)
+            return {};
+        return sessions_;
+    }
+//---------------------------------------------------------------------------------------------------------------------
     session_manager* tcp_basic_server::get_session_manager()
     {
         return sessions_.get();
@@ -195,6 +202,65 @@ namespace attender
     )
     {
         router_.mount(root_path, path_template, on_connect, supported_methods, priority);
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    void tcp_basic_server::header_read_handler(request_handler* req, response_handler* res, tcp_connection_interface* connection, boost::system::error_code ec, std::exception const& exc)
+    {
+        auto clearConnection = [this, connection]()
+        {
+            connections_.remove(connection);
+        };
+
+        // socket closed
+        if (ec.value() == 2)
+            return clearConnection();
+
+        if (ec == boost::asio::error::operation_aborted)
+            return clearConnection();
+
+        if (ec)
+        {
+            on_error_(connection, ec, exc);
+            if (ec.value() == boost::system::errc::protocol_error)
+                return (void)connection->get_response_handler().send_status(400);
+            else
+                return clearConnection();
+        }
+
+        // finished header parsing.
+        match_result best_match;
+        auto maybeRoute = router_.find_route(req->get_header(), best_match);
+        if (maybeRoute)
+        {
+            req->set_parameters(maybeRoute.get().get_path_parameters(req->get_header().get_path()));
+            if (handle_session(req, res))
+            {
+                try
+                {
+                    maybeRoute.get().get_callback()(req, res);
+                }
+                catch(std::exception const& exc)
+                {
+                    if (settings_.expose_exception)
+                        res->status(500).send(exc.what());
+                    else
+                        res->status(500);
+                }
+                catch(...)
+                {
+                    res->send_status(500);
+                }
+            }
+        }
+        else
+        {
+            if (best_match == match_result::path_match)
+                res->send_status(405);
+            else if (on_missing_handler_)
+                on_missing_handler_(req, res);
+            else
+                res->send_status(404);
+        }
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_basic_server::mount(
