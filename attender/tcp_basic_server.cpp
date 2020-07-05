@@ -56,64 +56,51 @@ namespace attender
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_basic_server::install_session_control
     (
-        std::unique_ptr <session_storage_interface>&& session_storage,
-        std::unique_ptr <authorizer_interface>&& authorizer,
-        std::string const& id_cookie_key,
-        bool allowOptionsUnauthorized,
-        cookie const& cookie_base,
-        std::function <void(request_handler*, response_handler*)> authorization_conditioner
+        SessionControlParam&& controlParam
     )
     {
-        id_cookie_key_ = id_cookie_key;
-        sessions_ = std::make_shared <session_manager>(std::move(session_storage));
-        authorizer_ = std::shared_ptr <authorizer_interface>(authorizer.release());
-        authorization_conditioner_ = authorization_conditioner;
-        router_.add_session_manager(sessions_, id_cookie_key_);
-        allowOptionsUnauthorized_ = allowOptionsUnauthorized;
-        cookie_base_ = cookie_base;
+        sessionControl_.id_cookie_key = controlParam.id_cookie_key;
+        sessionControl_.sessions = std::make_shared <session_manager>(std::move(controlParam.session_storage));
+        sessionControl_.authorizer = std::shared_ptr <authorizer_interface>(controlParam.authorizer.release());
+        sessionControl_.authorization_conditioner = controlParam.authorization_conditioner;
+        router_.add_session_manager(sessionControl_.sessions, sessionControl_.id_cookie_key);
+        sessionControl_.allowOptionsUnauthorized = controlParam.allowOptionsUnauthorized;
+        sessionControl_.cookie_base = controlParam.cookie_base;
+        sessionControl_.disable_automatic_authentication = controlParam.disable_automatic_authentication;
+        sessionControl_.authentication_path = controlParam.authentication_path;
     }
 //---------------------------------------------------------------------------------------------------------------------
     std::weak_ptr <session_manager> tcp_basic_server::get_installed_session_manager()
     {
-        if (!sessions_)
+        if (!sessionControl_.sessions)
             return {};
-        return sessions_;
+        return sessionControl_.sessions;
     }
 //---------------------------------------------------------------------------------------------------------------------
     session_manager* tcp_basic_server::get_session_manager()
     {
-        return sessions_.get();
+        return sessionControl_.sessions.get();
     }
 //---------------------------------------------------------------------------------------------------------------------
-    bool tcp_basic_server::handle_session(request_handler* req, response_handler* res)
+    bool tcp_basic_server::authenticate_session(request_handler* req, response_handler* res)
     {
-        if (!sessions_)
-            return true;
-
-        auto state = sessions_->load_session <attender::session>(id_cookie_key_, nullptr, req);
-        if (state == session_state::live)
-            return true;
-
-        if (allowOptionsUnauthorized_ && req->method() == "OPTIONS")
-            return true;
-
-        if (authorization_conditioner_)
-            authorization_conditioner_(req, res);
+        if (sessionControl_.authorization_conditioner)
+            sessionControl_.authorization_conditioner(req, res);
 
         auto observer = res->observe_conclusion();
-        auto result = authorizer_->try_perform_authorization(req, res);
+        auto result = sessionControl_.authorizer->try_perform_authorization(req, res);
         if (observer->has_concluded())
             return false;
 
         auto make_session = [this, res, req]()
         {
-            auto id = sessions_->make_session();
-            cookie c = cookie_base_;
-            c.set_name(id_cookie_key_);
+            auto id = sessionControl_.sessions->make_session();
+            cookie c = sessionControl_.cookie_base;
+            c.set_name(sessionControl_.id_cookie_key);
             c.set_value(id);
             c.set_path("/");
             res->set_cookie(c);
-            req->patch_cookie(id_cookie_key_, id);
+            req->patch_cookie(sessionControl_.id_cookie_key, id);
             return true;
         };
 
@@ -127,7 +114,7 @@ namespace attender
             }
             case(authorization_result::negotiate):
             {
-                authorizer_->negotiate_authorization_method(req, res);
+                sessionControl_.authorizer->negotiate_authorization_method(req, res);
                 return false;
             }
             case(authorization_result::allowed_continue):
@@ -149,8 +136,36 @@ namespace attender
                 return false;
             }
             default:
+            {
+                res->end();
                 return false;
+            }
         }
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    bool tcp_basic_server::handle_session(request_handler* req, response_handler* res)
+    {
+        if (!sessionControl_.sessions)
+            return true;
+
+        auto state = sessionControl_.sessions->load_session <attender::session>(sessionControl_.id_cookie_key, nullptr, req);
+        if (state == session_state::live)
+            return true;
+
+        if (sessionControl_.allowOptionsUnauthorized && req->method() == "OPTIONS")
+            return true;
+
+        if (sessionControl_.disable_automatic_authentication)
+        {
+            if (req->path() != sessionControl_.authentication_path)
+            {
+                res->status(401).end();
+                return false;
+            }
+            return true;
+        }
+
+        return authenticate_session(req, res);
     }
 //---------------------------------------------------------------------------------------------------------------------
     void tcp_basic_server::get(std::string const& path_template, connected_callback const& on_connect)

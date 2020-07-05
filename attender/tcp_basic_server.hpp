@@ -10,6 +10,7 @@
 #include "session/session_manager.hpp"
 #include "session/session_storage_interface.hpp"
 #include "session/authorizer_interface.hpp"
+#include "session/session_control.hpp"
 
 namespace attender
 {
@@ -65,15 +66,13 @@ namespace attender
          *  @param allowOptionsUnauthorized allow OPTIONS requests without authorization.
          *  @param authorization_conditioner A function applied during authorization. Can be used to allow CORS.
          */
-        void install_session_control
-        (
-            std::unique_ptr <session_storage_interface>&& session_storage,
-            std::unique_ptr <authorizer_interface>&& authorizer,
-            std::string const& id_cookie_key,
-            bool allowOptionsUnauthorized,
-            cookie const& cookie_base = cookie{},
-            std::function <void(request_handler*, response_handler*)> authorization_conditioner = {}
-        );
+        void install_session_control(SessionControlParam&& controlParam);
+
+        /**
+         *  Will try to perform authentication, if a session control is installed.
+         *  Returns false if session is unauthorized to proceed.
+         */
+        bool authenticate_session(request_handler* req, response_handler* res);
 
         /**
          *  Retrieve a weak ptr to the session manager.
@@ -219,11 +218,6 @@ namespace attender
         missing_handler_callback on_missing_handler_;
 
         // session
-        std::shared_ptr <session_manager> sessions_;
-        std::shared_ptr <authorizer_interface> authorizer_;
-        std::function <void(request_handler*, response_handler*)> authorization_conditioner_;
-        std::string id_cookie_key_;
-        bool allowOptionsUnauthorized_;
-        cookie cookie_base_;
+        SessionControl sessionControl_;
     };
 }

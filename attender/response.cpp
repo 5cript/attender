@@ -203,6 +203,7 @@ namespace attender
                 if (!concl->is_alive())
                 {
                     prod.end_production({boost::system::errc::connection_reset, boost::system::system_category()});
+                    this->end(); // neccessary, or connection leaks in manager.
                     return;
                 }
 
@@ -250,7 +251,7 @@ namespace attender
 
                 get_connection()->write(
                     /*std::move(avail_bytes)*/ avail_bytes,
-                    [&prod, avail](auto ec, auto amount)
+                    [&prod, avail, this](auto ec, auto amount)
                     {
                         if (!ec)
                         {
@@ -268,6 +269,7 @@ namespace attender
                         {
                             prod.on_error(ec);
                             prod.end_production(ec);
+                            this->end();
                         }
                     }
                 );
