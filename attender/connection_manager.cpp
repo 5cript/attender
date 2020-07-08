@@ -1,6 +1,8 @@
 #include "connection_manager.hpp"
 #include "tcp_connection.hpp"
 
+#include <stdexcept>
+
 namespace attender
 {
 //#####################################################################################################################
@@ -14,8 +16,10 @@ namespace attender
     void connection_manager::remove(tcp_connection_interface* connection)
     {
         std::lock_guard <std::mutex> guard (connectionsLock_);
-        connections_.erase(connection);
-        free_connection(connection);
+        if (connections_.erase(connection) != 0)
+            free_connection(connection);
+        else
+            throw std::logic_error("connection was already freed");
     }
 //---------------------------------------------------------------------------------------------------------------------
     void connection_manager::clear()
