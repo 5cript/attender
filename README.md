@@ -1,5 +1,5 @@
 # attender
-A windows/linux RESTful webservice server for professionals built using boost::asio.
+A windows/linux RESTful webservice server built using boost::asio.
 
 1. [Features](https://github.com/5cript/attender#features)
 2. [Documentation](https://github.com/5cript/attender#documentation)
