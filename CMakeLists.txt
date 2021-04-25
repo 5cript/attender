@@ -25,7 +25,7 @@ add_cxx_compiler_flag("-Wstrict-aliasing")
 add_cxx_compiler_flag("-O3")
 
 # Add files
-file(GLOB_RECURSE sources "attender/source/*.cpp")
+file(GLOB_RECURSE sources "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
 
 # Add library
 add_library(attender STATIC ${sources})
@@ -40,17 +40,14 @@ find_library(LCRYPTO crypto)
 find_library(LCRYPTOPP cryptopp)
 
 target_include_directories(attender PUBLIC
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/attender/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
 target_link_libraries(attender PRIVATE Boost::filesystem Boost::system ${LSSL}  ${LCRYPTOPP} ${LCRYPTO})
 
 # MS SOCK
 if (WIN32)
-	find_library(LWS2_32 ws2_32)
-	find_library(LMSWSOCK mswsock)
-	
-	target_link_libraries(attender PRIVATE  ${LWS2_32} ${LMSWSOCK} ${BCRYPT})
+	target_link_libraries(attender PRIVATE  -Lws2_32 -lmswsock)
 	
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		target_compile_definitions(attender PRIVATE BOOST_USE_WINDOWS_H=1)
