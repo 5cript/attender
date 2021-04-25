@@ -90,7 +90,7 @@ namespace attender
 
     public:
 
-        explicit http_connection_base(http_server_interface* parent, SocketT* socket)
+        explicit http_connection_base(http_server_interface* parent, SocketT* socket, final_callback const& on_timeout)
             : parent_(parent)
             , socket_{socket}
             , buffer_(config::buffer_size)
@@ -100,19 +100,24 @@ namespace attender
             , read_timeout_timer_{internal::get_io_context <SocketT>::ctx(socket)}
             , closed_{false}
             , kept_alive_{nullptr}
+            , on_timeout_{on_timeout}
         {
             // this will ensure, that the timer does not fire right away when it it started
             // the timer is started on read, but the timeout will be set later in every do_read cycle.
             read_timeout_timer_.expires_at(boost::posix_time::pos_infin);
         }
 
-        explicit http_connection_base(http_server_interface* parent,
-                                     SocketT&& socket,
-                                     SocketT&& /*dummy hack*/)
-            : http_connection_base(parent, new SocketT(std::move(socket)))
+        explicit http_connection_base(
+            http_server_interface* parent,
+            SocketT&& socket,
+            SocketT&& /*dummy hack*/,
+            final_callback const& on_timeout
+        )
+            : http_connection_base(parent, new SocketT(std::move(socket)), on_timeout)
         {
             // DELEGATE
         }
+
 
         ~http_connection_base()
         {
@@ -409,6 +414,8 @@ namespace attender
             // deadline before this actor had a chance to run.
             if (timer->expires_at() <= boost::asio::deadline_timer::traits_type::now())
             {
+                if (on_timeout_)
+                    on_timeout_(&get_request_handler(), &get_response_handler());
                 stop();
             }
             else
@@ -448,8 +455,8 @@ namespace attender
         std::size_t bytes_ready_;
         boost::asio::deadline_timer read_timeout_timer_;
         std::atomic_bool closed_;
-
         std::unique_ptr <lifetime_binding> kept_alive_;
+        final_callback on_timeout_;
     };
 
     class http_stream_device

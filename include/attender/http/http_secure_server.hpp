@@ -17,10 +17,19 @@ namespace attender
         using socket_type = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
 
     public:
-        http_secure_server(asio::io_service* service,
-                          std::unique_ptr <ssl_context_interface> context,
-                          error_callback on_error,
-                          settings setting = {});
+        http_secure_server(
+            asio::io_service* service,
+            std::unique_ptr <ssl_context_interface> context,
+            error_callback on_error,
+            settings setting = {}
+        );
+        http_secure_server(
+            asio::io_service* service,
+            std::unique_ptr <ssl_context_interface> context,
+            error_callback on_error,
+            final_callback on_connection_timeout, 
+            settings setting = {}
+        );
         ~http_secure_server() = default;
 
         /**
@@ -36,5 +45,6 @@ namespace attender
         std::unique_ptr <ssl_context_interface> context_;
         std::unique_ptr <socket_type> socket_;
         accept_callback <socket_type> on_accept_;
+        final_callback on_connection_timeout_;
     };
 }

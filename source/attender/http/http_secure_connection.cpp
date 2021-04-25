@@ -3,8 +3,13 @@
 namespace attender
 {
 //#####################################################################################################################
-    http_secure_connection::http_secure_connection(http_server_interface* parent, http_secure_connection::ssl_socket_type* socket)
-        : http_connection_base <http_secure_connection::ssl_socket_type> (parent, socket)
+    http_secure_connection::http_secure_connection
+    (
+        http_server_interface* parent, 
+        http_secure_connection::ssl_socket_type* socket,
+        final_callback const& on_timeout
+    )
+        : http_connection_base <http_secure_connection::ssl_socket_type> (parent, socket, on_timeout)
     {
 
     }

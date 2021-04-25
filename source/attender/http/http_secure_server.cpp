@@ -10,13 +10,30 @@
 namespace attender
 {
 //#####################################################################################################################
-    http_secure_server::http_secure_server(asio::io_service* service,
-                                         std::unique_ptr <ssl_context_interface> context,
-                                         error_callback on_error,
-                                         settings setting)
+    http_secure_server::http_secure_server(
+        asio::io_service* service,
+        std::unique_ptr <ssl_context_interface> context,
+        error_callback on_error,
+        settings setting
+    )
         : http_basic_server(service, std::move(on_error), std::move(setting))
         , context_{std::move(context)}
         , on_accept_{[](http_secure_server::socket_type const&){return true;}}
+        , on_connection_timeout_{}
+    {
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    http_secure_server::http_secure_server(
+        asio::io_service* service,
+        std::unique_ptr <ssl_context_interface> context,
+        error_callback on_error,
+        final_callback on_connection_timeout,
+        settings setting
+    )
+        : http_basic_server(service, std::move(on_error), std::move(setting))
+        , context_{std::move(context)}
+        , on_accept_{[](http_secure_server::socket_type const&){return true;}}
+        , on_connection_timeout_{on_connection_timeout}
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -41,7 +58,7 @@ namespace attender
 
                 if (!ec && on_accept_(*socket_))
                 {
-                    auto* connection = connections_.create <http_secure_connection> (this, socket_.release());
+                    auto* connection = connections_.create <http_secure_connection> (this, socket_.release(), on_connection_timeout_);
 
                     static_cast <http_secure_connection*> (connection)->get_secure_socket()->async_handshake(
                         boost::asio::ssl::stream_base::server,

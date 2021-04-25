@@ -15,6 +15,10 @@ namespace attender
         http_server(asio::io_service* service,
                    error_callback on_error,
                    settings setting = {});
+        http_server(asio::io_service* service,
+                   error_callback on_error,
+                   final_callback on_connection_timeout,
+                   settings setting = {});
         ~http_server() = default;
 
         /**
@@ -29,5 +33,6 @@ namespace attender
     private:
         boost::asio::ip::tcp::socket socket_;
         accept_callback <boost::asio::ip::tcp::socket> on_accept_;
+        final_callback on_connection_timeout_;
     };
 }

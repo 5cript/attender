@@ -9,12 +9,28 @@
 namespace attender
 {
 //#####################################################################################################################
-    http_server::http_server(asio::io_service* service,
-                           error_callback on_error,
-                           settings setting)
+    http_server::http_server(
+        asio::io_service* service,
+        error_callback on_error,
+        settings setting
+    )
         : http_basic_server(service, std::move(on_error), std::move(setting))
         , socket_{*service}
         , on_accept_{[](boost::asio::ip::tcp::socket const&){return true;}}
+        , on_connection_timeout_{}
+    {
+    }
+//---------------------------------------------------------------------------------------------------------------------
+    http_server::http_server(
+        asio::io_service* service,
+        error_callback on_error,
+        final_callback on_connection_timeout,
+        settings setting
+    )
+        : http_basic_server(service, std::move(on_error), std::move(setting))
+        , socket_{*service}
+        , on_accept_{[](boost::asio::ip::tcp::socket const&){return true;}}
+        , on_connection_timeout_{on_connection_timeout}
     {
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -38,7 +54,7 @@ namespace attender
 
                 if (!ec && on_accept_(socket_))
                 {
-                    auto* connection = connections_.create <http_connection> (this, std::move(this->socket_));
+                    auto* connection = connections_.create <http_connection> (this, std::move(this->socket_), on_connection_timeout_);
 
                     auto* res = new response_handler (connection); // noexcept
                     auto* req = new request_handler (connection); // noexcept

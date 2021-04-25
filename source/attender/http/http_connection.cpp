@@ -6,8 +6,13 @@
 namespace attender
 {
 //#####################################################################################################################
-    http_connection::http_connection(http_server_interface* parent, boost::asio::ip::tcp::socket&& socket)
-        : http_connection_base <boost::asio::ip::tcp::socket> (parent, std::move(socket), std::move(socket))
+    http_connection::http_connection
+    (
+        http_server_interface* parent, 
+        boost::asio::ip::tcp::socket&& socket,
+        final_callback const& on_timeout
+    )
+        : http_connection_base <boost::asio::ip::tcp::socket> (parent, std::move(socket), std::move(socket), on_timeout)
     {
 
     }

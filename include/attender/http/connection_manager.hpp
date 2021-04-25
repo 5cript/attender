@@ -27,11 +27,11 @@ namespace attender
          *  @return The new connection object.
          */
         template <typename T, typename SocketT>
-        http_connection_interface* create(http_server_interface* server, SocketT* socket)
+        http_connection_interface* create(http_server_interface* server, SocketT* socket, final_callback const& on_timeout)
         {
             std::lock_guard <std::mutex> guard (connectionsLock_);
 
-            auto c = connections_.insert(new T{server, socket});
+            auto c = connections_.insert(new T{server, socket, on_timeout});
             auto* connection = *c.first;
             connection->start();
             return connection;
@@ -46,11 +46,11 @@ namespace attender
          *  @return The new connection object.
          */
         template <typename T, typename SocketT>
-        http_connection_interface* create(http_server_interface* server, SocketT&& socket)
+        http_connection_interface* create(http_server_interface* server, SocketT&& socket, final_callback const& on_timeout)
         {
             std::lock_guard <std::mutex> guard (connectionsLock_);
 
-            auto c = connections_.insert(new T{server, std::move(socket)});
+            auto c = connections_.insert(new T{server, std::move(socket), on_timeout});
             auto* connection = *c.first;
             connection->start();
             return connection;

@@ -1,5 +1,8 @@
 # Version check
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.20)
+
+# Includes
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests.cmake)
 
 # Project
 project(attender)
@@ -53,4 +56,8 @@ if (WIN32)
 		target_compile_definitions(attender PRIVATE BOOST_USE_WINDOWS_H=1)
 	endif()
 else()
+endif()
+
+if (ENABLE_TESTING)
+	include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests.cmake)
 endif()

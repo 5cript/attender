@@ -198,7 +198,7 @@ namespace attender
         {
             // header is sent, now send chunked data.
             std::function <void(std::string const& err, bool)> on_produce;
-            on_produce = [this, concl, &prod, on_produce](std::string const& err, bool control_call)
+            on_produce = [this, concl, &prod, on_produce](std::string const& err, bool /*control_call*/)
             {
                 if (!concl->is_alive())
                 {
@@ -251,7 +251,7 @@ namespace attender
 
                 get_connection()->write(
                     /*std::move(avail_bytes)*/ avail_bytes,
-                    [&prod, avail, this](auto ec, auto amount)
+                    [&prod, avail, this](auto ec, auto)
                     {
                         if (!ec)
                         {

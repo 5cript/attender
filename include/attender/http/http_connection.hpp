@@ -10,7 +10,11 @@ namespace attender
     class http_connection : public http_connection_base <asio::ip::tcp::socket>
     {
     public:
-        explicit http_connection(http_server_interface* parent, boost::asio::ip::tcp::socket&& socket);
+        explicit http_connection(
+            http_server_interface* parent, 
+            boost::asio::ip::tcp::socket&& socket, 
+            final_callback const& on_timeout
+        );
         ~http_connection() = default;
 
         boost::system::error_code wait_write() override

@@ -1,0 +1,1 @@
+option(ENABLE_TESTING "Enable test build" off)

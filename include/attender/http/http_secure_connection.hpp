@@ -19,7 +19,7 @@ namespace attender
         using ssl_socket_type = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
 
     public:
-        explicit http_secure_connection(http_server_interface* parent, ssl_socket_type* socket);
+        explicit http_secure_connection(http_server_interface* parent, ssl_socket_type* socket, final_callback const& on_timeout);
         ~http_secure_connection()
         {
             //std::cout << "secure connection died\n";
