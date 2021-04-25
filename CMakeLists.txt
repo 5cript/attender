@@ -25,7 +25,7 @@ add_cxx_compiler_flag("-Wstrict-aliasing")
 add_cxx_compiler_flag("-O3")
 
 # Add files
-file(GLOB_RECURSE sources "attender/*.cpp")
+file(GLOB_RECURSE sources "attender/source/*.cpp")
 
 # Add library
 add_library(attender STATIC ${sources})
@@ -38,6 +38,10 @@ find_package(Boost REQUIRED COMPONENTS
 find_library(LSSL ssl)
 find_library(LCRYPTO crypto)
 find_library(LCRYPTOPP cryptopp)
+
+target_include_directories(attender PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/attender/include>
+)
 
 target_link_libraries(attender PRIVATE Boost::filesystem Boost::system ${LSSL}  ${LCRYPTOPP} ${LCRYPTO})
 

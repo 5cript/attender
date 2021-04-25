@@ -89,7 +89,7 @@ int main()
     managed_io_context <thread_pooler> context;
 
     // create a server
-    tcp_server server(context.get_io_service(),
+    http_server server(context.get_io_service(),
         [](auto* connection, auto const& ec, auto const& exc) {
             // some error occured. (this is not thread safe)
             // You MUST check the error code here, because some codes mean, that the connection went kaputt!
@@ -126,7 +126,7 @@ int main()
     managed_io_context <thread_pooler> context;
 
     // create a server
-    tcp_secure_server server(                     
+    http_secure_server server(                     
         // boost::asio::io_service
         context.get_io_service(),
                              
@@ -332,7 +332,7 @@ int main()
     };
 
     // normal server for simplicity, secure server ofc also possible.
-    tcp_server server(io_ctx.get_io_service(),
+    http_server server(io_ctx.get_io_service(),
         [](auto* connection, auto const& ec) {
             std::cerr << "ERROR: " << ec << "\n";
         }
