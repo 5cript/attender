@@ -1,10 +1,18 @@
 #pragma once
 
 #include "unsecure_server.hpp"
+
+#include <attender/http/response.hpp>
+
 #include <attendee/attendee.hpp>
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
+
+using namespace std::chrono_literals;
 
 namespace attender::tests
 {
@@ -15,26 +23,35 @@ namespace attender::tests
         HttpServerTests()
             : UnsecureServer{{}}
         {}
-
-    protected:
-        void SetUp() override
-        {
-            server_.start();
-            port_ = server_.get_local_endpoint().port();
-        }
-
-    protected:
-        unsigned short port_;
     };
 
     TEST_F(HttpServerTests, ServerIsRunningAndBoundToAPort)
     {
+        setupAndStart();
         std::cout << "[          ] " << "Port: " << port_ << "\n";
         EXPECT_NE(port_, 0);
     }
 
-    TEST_F(HttpServerTests, CanConnectToTheServer)
+    TEST_F(HttpServerTests, CanConnectAndGetSimpleUrl)
     {
-        
+        setupAndStart([this](auto& server) {setupEmpty(server);});
+
+        auto result = client_
+            .get(url("/empty"))
+            .perform();
+
+        EXPECT_EQ(result.result(), CURLE_OK);
+    }
+
+    TEST_F(HttpServerTests, EmptyRequestReturns204)
+    {
+        setupAndStart([this](auto& server) {setupEmpty(server);});
+
+        auto result = client_
+            .get(url("/empty"))
+            .perform();
+
+        ASSERT_EQ(result.result(), CURLE_OK);
+        EXPECT_EQ(result.code(), 204);
     }
 }
