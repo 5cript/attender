@@ -67,5 +67,5 @@ target_compile_options(attender PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 target_compile_options(attender PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
 
 if (ENABLE_TESTING)
-	include(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()

@@ -38,12 +38,17 @@ namespace attender
         ~http_basic_server();
 
         /**
+         * Returns the local endpoint (port and network interface).
+         */
+        boost::asio::ip::tcp::endpoint get_local_endpoint() const override;
+
+        /**
          *  Starts the server on the port (0-65536 or "http", abides boost asio behaviour) on the interface "host".
          *
          *  @param port The port to bind to.
          *  @param host The target interface. "0.0.0.0" is the default value for ipv4 and "::" for ipv6.
          */
-        void start(std::string const& port, std::string const& host = "::") override;
+        void start(std::string const& port = "0", std::string const& host = "::") override;
 
         /**
          *  Stops the server and terminates all connections.

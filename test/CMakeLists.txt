@@ -1,14 +1,14 @@
 cmake_minimum_required (VERSION 3.20)
 
+add_subdirectory(attendee)
+
 # Project
 project(testattender)
 
-add_executable(testattender ${sources} "${CMAKE_CURRENT_SOURCE_DIR}/test/tests.cpp")
+add_executable(testattender "tests.cpp")
 
-find_package(CURL REQUIRED)
-
-target_include_directories(testattender PRIVATE ${CURL_INCLUDE_DIRS})
-target_link_libraries(testattender PRIVATE attender -lgtest CURL::libcurl)
+target_include_directories(testattender PRIVATE ${CURL_INCLUDE_DIRS} "attendee/include")
+target_link_libraries(testattender PRIVATE attender attendee -lgtest)
 
 # Compiler Options
 set(DEBUG_OPTIONS -fexceptions -g -Wall -pedantic-errors -pedantic)

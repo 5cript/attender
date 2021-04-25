@@ -29,6 +29,11 @@ namespace attender
         return &connections_;
     }
 //---------------------------------------------------------------------------------------------------------------------
+    boost::asio::ip::tcp::endpoint http_basic_server::get_local_endpoint() const
+    {
+        return acceptor_.local_endpoint();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void http_basic_server::start(std::string const& port, std::string const& host)
     {
         stop();
