@@ -12,7 +12,7 @@ doc/latex/*
 doc/xml/*
 doc/node_modules/*
 doc/.vscode/*
-doc/md/*
+doc/md/
 build/*
 x64/*
 .vs/*
