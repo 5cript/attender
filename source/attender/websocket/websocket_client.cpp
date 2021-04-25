@@ -16,9 +16,10 @@ namespace attender::websocket
 
     void client::connect(std::string const& port, std::string const& host = "::")
     {
+        /*
         tcp::resolver resolver{*service_};
         auto const results = resolver.resolve(host, port);
-
         auto ep = boost::asio::connect(ws_.next_layer(), results);
+        */
     }
 }

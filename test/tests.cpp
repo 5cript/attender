@@ -1,4 +1,5 @@
 #include "http/test_http_server.hpp"
+#include "http/test_header.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
