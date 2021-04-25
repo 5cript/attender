@@ -131,7 +131,7 @@ int main()
         context.get_io_service(),
                              
         // An SSL context
-        std::unique_ptr <attender::ssl_context_interface> {new ssl_example_context("key.pem", "cert.pem")},
+        std::make_unique <attender::ssl_context_interface> {ssl_example_context("key.pem", "cert.pem")},
                              
         // An error callback. (here with OpenSSL demangling)
         [](auto* connection, auto const& ec, auto const& exc) {
@@ -238,8 +238,7 @@ int main()
         // Creates a streaming producer.
         // The streaming producer is meant as an example implementation of 'producer'.
         // But it can be used for very very simple data streaming.
-        std::shared_ptr <streaming_producer> produ;
-        produ.reset(new streaming_producer
+        auto produ = std::make_shared <streaming_producer>()
             {
                 "identity", // encoding, identity in this case.
                 [&produ]()
@@ -255,7 +254,7 @@ int main()
         );
 
         // creating a thread that produces some data to shove into the connection.
-        std::shared_ptr <std::thread> blab{new std::thread([produ](){
+        auto blab = std::make_shared <std::thread>([produ](){
             // wait for the connection to setup.
             produ->wait_for_consumer();
 
@@ -275,7 +274,7 @@ int main()
                     return;
                 }
             }
-        })};
+        });
 
         // now do the actual call.
         res->send_chunked(*produ, [produ, blab](auto e) {
