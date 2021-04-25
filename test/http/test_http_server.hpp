@@ -6,10 +6,12 @@ namespace attender
 {
     class HttpServerTests : public ::testing::Test
     {
-    };
-}
 
-TEST_F(HttpServerTests, DummyTest)
-{
-    EXPECT_TRUE(true);
+    };
+
+    TEST_F(HttpServerTests, DummyTest)
+    {
+        EXPECT_TRUE(true);
+    }
+
 }
