@@ -39,15 +39,10 @@ This project provides a cmake file (for a static library).
 - cmake ..        (add '-G "MSYS Makefiles"' if you build with msys2)
 - make
 
-There also is a .sln file for Visual Studio users and MSVC. Version 2017 is required for sufficient language support.
+Visual Studio ist not extensively supported or tested. But should work with minor tweaks and a relatively new boost and robust C++17 support.
 When using this library, you have to link **ssl, boost_system, boost_filesystem, ws2_32, pthread, mswsock, atomic.** Depends on your setup and usage.
 
 ## Basics
-### expressjs inspiration
-The library was inspired by express.js. The API is not identical and support is not identical, but if you find this documentation lacking, you can get a first impression at:
-- [ExpressJS Request](https://expressjs.com/en/4x/api.html#req)
-- [ExpressJS Response](https://expressjs.com/en/4x/api.html#res)
-
 ### managed_io_context
 The managed io context is a wrapper for boost::asio::io_service. It accepts some kind of attender::async_model which handels the usage of the io_service. You can subclass attender::async_model and provide your own implementation.
 You can use io_context/thread_pooler.hpp as an example.
@@ -317,9 +312,9 @@ server.mount("/home/username", "/mnt", [](auto req, auto mres) {
 This is example shows how to get, create and delete a session.
 ```C++
 #include <attender/attender.hpp>
-#include <attender/attender/session/session_manager.hpp>
-#include <attender/attender/session/memory_session_storage.hpp>
-#include <attender/attender/session/uuid_session_cookie_generator.hpp>
+#include <attender/session/session_manager.hpp>
+#include <attender/session/memory_session_storage.hpp>
+#include <attender/session/uuid_session_cookie_generator.hpp>
 
 int main()
 {
