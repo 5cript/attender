@@ -1,5 +1,6 @@
 # attender
 A windows/linux RESTful webservice server built using boost::asio.
+(*important!* License changed to more permissive BSL 1.0 on master. Link back is no longer required)
 
 1. [Features](https://github.com/5cript/attender#features)
 2. [Documentation](https://github.com/5cript/attender#documentation)
