@@ -51,7 +51,18 @@ namespace attender::tests
             .get(url("/empty"))
             .perform();
 
-        ASSERT_EQ(result.result(), CURLE_OK);
+        EXPECT_EQ(result.result(), CURLE_OK);
         EXPECT_EQ(result.code(), 204);
+    }
+
+    TEST_F(HttpServerTests, MissingRouteReturns404)
+    {
+        setupAndStart([this](auto&) {});
+
+        auto result = client_
+            .get(url("/invalid"))
+            .perform();
+    
+        EXPECT_EQ(result.code(), 404);
     }
 }
