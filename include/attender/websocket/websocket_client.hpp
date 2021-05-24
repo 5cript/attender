@@ -7,6 +7,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include <chrono>
+#include <memory>
 #include <variant>
 
 namespace attender::websocket
@@ -50,7 +51,7 @@ namespace attender::websocket
         /**
          * Connect to a remote websocket server.
          */
-        void connect(connection_parameters const& params, std::function <void(const boost::system::error_code&)> const& onCompletion);
+        void connect(connection_parameters const& params, std::function <void(const boost::system::error_code&)> const& on_completion);
 
         /**
          * Set a timeout for handshakes.
@@ -75,26 +76,21 @@ namespace attender::websocket
         /**
          * Writes string to the server.
          * @param data Data to write.
-         * @param onCompletion What to do when complete.
+         * @param on_completion What to do when complete.
          */
-        void write(std::string const& data, std::function <void(const boost::system::error_code&, std::size_t)> const& onCompletion);
+        void write(std::string const& data, std::function <void(const boost::system::error_code&, std::size_t)> const& on_completion);
 
         /**
-         * Read data synchronously.
+         * Starts reading.
          */
-        template <typename T>
-        void read_sync(T& buffer)
-        {
-            ws_.read(buffer);
-        }
+        void listen(std::function<void(boost::system::error_code, std::string const&)> read_cb);
 
     private:
         std::variant<boost::asio::ip::tcp::resolver::results_type, boost::system::error_code> resolve(connection_parameters const& params) const;
-        void set_user_agent();
 
     private:
-        asio::io_service* service_;
-        boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws_;
-        boost::asio::ip::tcp::endpoint endpoint_;
+        struct implementation;
+
+        std::shared_ptr <implementation> impl_;
     };
 }

@@ -201,4 +201,38 @@ namespace attender::testing
         }
         server_.stop();
     }
+
+    TEST_F(WebsocketClientTests, CanInitiateReadAndClose)
+    {
+        auto port = startServerAndWaitForPort();
+        {
+            websocket::client client{context_.get_io_service()};
+            client.connect_sync({.host = "localhost", .port = port});
+            client.listen([](auto, std::string const&)
+            {
+            });
+        }
+        server_.stop();
+    }
+
+    TEST_F(WebsocketClientTests, ReadingEchoYieldsExpectedResult)
+    {
+        auto port = startServerAndWaitForPort();
+        std::shared_ptr<Barrier> readSyncBarrier = std::make_shared<Barrier>();
+        std::string recv;
+        {
+            websocket::client client{context_.get_io_service()};
+            client.connect_sync({.host = "localhost", .port = port});
+            client.listen([&recv, readSyncBarrier](auto, std::string const& data)
+            {
+                readSyncBarrier->pass([&recv, &data](){
+                    recv = data;
+                });
+            });
+            client.write("hello", [](auto, auto){});
+        }
+        readSyncBarrier->halt(1s);
+        EXPECT_EQ(recv, "hello");
+        server_.stop();
+    }
 }
