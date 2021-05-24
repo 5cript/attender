@@ -102,6 +102,15 @@ namespace attender
             error_.store(true);
         }
 
+        void reset()
+        {
+            func_ = {};
+            fail_ = {};
+            fullfilled_.store(false);
+            error_.store(false);
+            last_ec_.store(boost::system::error_code{});
+        }
+
     private:
         std::function <void()> func_;
         std::function <void(boost::system::error_code)> fail_;

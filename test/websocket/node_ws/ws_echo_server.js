@@ -1,19 +1,24 @@
-const WebSocket = require('ws');
+import ControlPrinter from './common/ctrl_message';
+import WebSocket from 'ws';
 
-const server = new WebSocket.Server({ port: 45458 });
+const printer = new ControlPrinter();
+
+const port = 0;
+const server = new WebSocket.Server({ port: port });
+printer.sendVariable("port", server.address().port);
 
 server.on('connection', (client) => {
     client.on('message', (message) => {
-        console.log('received: %s', message);
+        printer.sendVariable("recv", message);
         client.send(message);
     });
 });
 
 process.on('SIGTERM', () => {
-    console.info('SIGTERM signal received.');
     server.close();
 });
 
 process.on('exit', () => {
-    console.log('bye');
 })
+
+console.log("unrelated");

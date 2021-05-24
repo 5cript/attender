@@ -7,6 +7,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include <chrono>
+#include <variant>
 
 namespace attender::websocket
 {
@@ -21,11 +22,18 @@ namespace attender::websocket
 
         struct timeouts
         {
-            std::optional <std::chrono::milliseconds> handshake_timeout;
-            std::optional <std::chrono::milliseconds> idle_timeout;
+            std::optional <std::chrono::milliseconds> handshake_timeout{std::nullopt};
+            std::optional <std::chrono::milliseconds> idle_timeout{std::nullopt};
         };
 
     public:
+        /**
+         * Construct a client with an io_service and an error handler for errors occuring from
+         * sources other than functions this class provides. For instance the destructor can cause errors.
+         * 
+         * @param service A boost io_service
+         * @param errorHandler A function taking a cstring and an error code and a message
+         */
         explicit client(asio::io_service* service);
         ~client();
 
@@ -40,6 +48,11 @@ namespace attender::websocket
         boost::system::error_code connect_sync(connection_parameters const& params);
 
         /**
+         * Connect to a remote websocket server.
+         */
+        void connect(connection_parameters const& params, std::function <void(const boost::system::error_code&)> const& onCompletion);
+
+        /**
          * Set a timeout for handshakes.
          */
         void set_timeout(timeouts const& timeouts);
@@ -47,7 +60,7 @@ namespace attender::websocket
         /**
          * Disconnect from the server.
          */
-        void disconnect();
+        boost::system::error_code disconnect();
 
         /**
          * Returns the underlying boost websocket instance.
@@ -60,6 +73,13 @@ namespace attender::websocket
         void write_sync(std::string const& data);
 
         /**
+         * Writes string to the server.
+         * @param data Data to write.
+         * @param onCompletion What to do when complete.
+         */
+        void write(std::string const& data, std::function <void(const boost::system::error_code&, std::size_t)> const& onCompletion);
+
+        /**
          * Read data synchronously.
          */
         template <typename T>
@@ -69,7 +89,12 @@ namespace attender::websocket
         }
 
     private:
+        std::variant<boost::asio::ip::tcp::resolver::results_type, boost::system::error_code> resolve(connection_parameters const& params) const;
+        void set_user_agent();
+
+    private:
         asio::io_service* service_;
         boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws_;
+        boost::asio::ip::tcp::endpoint endpoint_;
     };
 }

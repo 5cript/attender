@@ -20,7 +20,7 @@ target_link_libraries(
 )
 
 # Compiler Options
-target_compile_options(testattender PUBLIC -fexceptions -g -Wall -pedantic-errors -pedantic)
+target_compile_options(testattender PUBLIC -fexceptions -g -O0 -Wall -pedantic-errors -pedantic)
 
 if (PAUSE_AT_TEST_END)
     target_compile_definitions(testattender PRIVATE PAUSE_AT_TEST_END=1)
