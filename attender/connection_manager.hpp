@@ -7,6 +7,8 @@
 #include <boost/asio.hpp>
 #include <unordered_set>
 #include <mutex>
+#include <utility>
+#include <type_traits>
 
 namespace attender
 {
@@ -46,7 +48,7 @@ namespace attender
          *  @return The new connection object.
          */
         template <typename T, typename SocketT>
-        tcp_connection_interface* create(tcp_server_interface* server, SocketT&& socket)
+        std::enable_if <!std::is_pointer_v <SocketT>, tcp_connection_interface*>::type create(tcp_server_interface* server, SocketT&& socket)
         {
             std::lock_guard <std::mutex> guard (connectionsLock_);
 
