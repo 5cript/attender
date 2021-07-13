@@ -20,6 +20,7 @@ target_link_libraries(
 )
 
 # Compiler Options
+target_compile_options(testattender PUBLIC "$<$<CONFIG:DEBUG>:-g>")
 target_compile_options(testattender PUBLIC -fexceptions -g -O0 -Wall -pedantic-errors -pedantic)
 
 if (PAUSE_AT_TEST_END)

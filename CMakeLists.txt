@@ -11,6 +11,12 @@ function(add_cxx_compiler_flag FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAG}" PARENT_SCOPE)
 endfunction()
 
+
+if(NOT "${CMAKE_CXX_STANDARD}")
+	set(CMAKE_CXX_STANDARD 20)
+endif()
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 if (NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -41,14 +47,14 @@ find_package(Boost REQUIRED COMPONENTS
 find_library(LSSL ssl)
 find_library(LCRYPTO crypto)
 find_library(LCRYPTOPP cryptopp)
-find_library(LBROTLI_ENC brotlienc)
-find_library(LBROTLI_COMMON brotlicommon)
+find_library(LBROTLI_ENC brotlienc-static)
+find_library(LBROTLI_COMMON brotlicommon-static)
 
 target_include_directories(attender PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_link_libraries(attender PUBLIC Boost::filesystem Boost::system ${LSSL} ${LCRYPTOPP} ${LCRYPTO} ${LBROTLI_ENC} ${LBROTLI_COMMON})
+target_link_libraries(attender PUBLIC Boost::filesystem Boost::system ${LSSL} ${LCRYPTOPP} ${LCRYPTO} ${LBROTLI_ENC} ${LBROTLI_COMMON} -lstdc++)
 
 # MS SOCK
 if (WIN32)

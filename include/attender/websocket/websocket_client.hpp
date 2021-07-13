@@ -1,96 +1,70 @@
 #pragma once
 
-#include <attender/net_core.hpp>
-
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/asio/ip/tcp.hpp>
-
-#include <chrono>
-#include <memory>
-#include <variant>
+#include <attender/websocket/websocket_client_base.hpp>
 
 namespace attender::websocket
 {
     class client
+        : public client_base<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>>
     {
-        struct connection_parameters
-        {
-            std::string host = "::";
-            std::string port = "";
-            std::string target = "/";
-        };
-
-        struct timeouts
-        {
-            std::optional <std::chrono::milliseconds> handshake_timeout{std::nullopt};
-            std::optional <std::chrono::milliseconds> idle_timeout{std::nullopt};
-        };
-
     public:
-        /**
-         * Construct a client with an io_service and an error handler for errors occuring from
-         * sources other than functions this class provides. For instance the destructor can cause errors.
-         * 
-         * @param service A boost io_service
-         * @param errorHandler A function taking a cstring and an error code and a message
-         */
-        explicit client(asio::io_service* service);
-        ~client();
-
-        client(client const&) = delete;
-        client(client&&) = default;
-        client& operator=(client const&) = delete;
-        client& operator=(client&&) = default;
+        // keep this class stateless or threadsafety will be void
+        using client_base<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>>::client_base;
 
         /**
          * Connect to a remote websocket server.
          */
-        boost::system::error_code connect_sync(connection_parameters const& params);
+        boost::system::error_code connect_sync(connection_parameters const& params) override
+        {
+            return std::visit(overloaded{
+                [&params, impl_{this->impl_}](boost::asio::ip::tcp::resolver::results_type const& resolved)
+                {
+                    boost::system::error_code ec;
+                    
+                    impl_->endpoint_ = boost::asio::connect(impl_->ws_.next_layer(), resolved, ec);
+                    if (ec)
+                        return ec;
 
+                    impl_->ws_.handshake(params.host + ':' + std::to_string(impl_->endpoint_.port()), params.target, ec);
+                    return ec;
+                }, 
+                [](boost::system::error_code ec) 
+                {
+                    return ec;
+                }}, 
+                resolve(params)
+            );
+        }
+        
         /**
          * Connect to a remote websocket server.
          */
-        void connect(connection_parameters const& params, std::function <void(const boost::system::error_code&)> const& on_completion);
+        void connect(connection_parameters const& params, std::function <void(const boost::system::error_code&)> const& on_completion)
+        {
+            std::visit(overloaded{
+                [impl_{this->impl_}, &params, &on_completion](auto const& resolved)
+                {
+                    boost::asio::async_connect(impl_->ws_.next_layer(), resolved, [impl_, params, on_completion](
+                        boost::system::error_code ec,
+                        const boost::asio::ip::tcp::endpoint& endpoint
+                    )
+                    {
+                        if (ec)
+                            return on_completion(ec);
 
-        /**
-         * Set a timeout for handshakes.
-         */
-        void set_timeout(timeouts const& timeouts);
+                        impl_->endpoint_= endpoint;
+                        impl_->set_user_agent();
+                        impl_->ws_.handshake(params.host + ':' + std::to_string(impl_->endpoint_.port()), params.target, ec);
 
-        /**
-         * Disconnect from the server.
-         */
-        boost::system::error_code disconnect();
-
-        /**
-         * Returns the underlying boost websocket instance.
-         */
-        boost::beast::websocket::stream<boost::asio::ip::tcp::socket>& lower_layer();
-
-        /**
-         * Writes string to the server.
-         */
-        void write_sync(std::string const& data);
-
-        /**
-         * Writes string to the server.
-         * @param data Data to write.
-         * @param on_completion What to do when complete.
-         */
-        void write(std::string const& data, std::function <void(const boost::system::error_code&, std::size_t)> const& on_completion);
-
-        /**
-         * Starts reading.
-         */
-        void listen(std::function<void(boost::system::error_code, std::string const&)> read_cb);
-
-    private:
-        std::variant<boost::asio::ip::tcp::resolver::results_type, boost::system::error_code> resolve(connection_parameters const& params) const;
-
-    private:
-        struct implementation;
-
-        std::shared_ptr <implementation> impl_;
+                        on_completion(ec);
+                    });
+                }, 
+                [on_completion](boost::system::error_code ec) 
+                {
+                    on_completion(ec);
+                }}, 
+                resolve(params)
+            );
+        }
     };
 }

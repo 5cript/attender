@@ -13,8 +13,6 @@
 #include <string_view>
 #include <stdexcept>
 #include <unordered_map>
-
-// FIXME: remove me
 #include <iostream>
 
 namespace attender::testing
@@ -24,7 +22,7 @@ namespace attender::testing
     public:
         using readCbType = std::function<void(boost::system::error_code const& ec, std::unordered_map <std::string, std::string> const&)>;
 
-        void start(std::string const& name, boost::asio::io_service& ios);
+        void start(std::string const& name, boost::asio::io_service& ios, bool secure);
         void stop();
         void read(readCbType const& onRead);
 
@@ -37,7 +35,7 @@ namespace attender::testing
         std::vector<char> readBuf_;
     };
 
-    void NodeWebSocketServer::start(std::string const& name, boost::asio::io_service& ios)
+    void NodeWebSocketServer::start(std::string const& name, boost::asio::io_service& ios, bool secure)
     {
         asyncPipe_ = std::make_unique<boost::process::async_pipe>(ios);
         readBuf_.resize(4096);
@@ -47,6 +45,7 @@ namespace attender::testing
         >(
             boost::process::search_path("node"), 
             (boost::dll::program_location().parent_path() / "node_ws" / (name + ".js")).string(),
+            secure ? "--secure=true" : "--secure=false",
             boost::process::std_out > *asyncPipe_
         );
         if (!node_->running())
@@ -66,7 +65,10 @@ namespace attender::testing
     std::unordered_map <std::string, std::string> NodeWebSocketServer::parseMessage(std::string_view view)
     {
         if (!view.starts_with("<ctrl>:"))
+        {
+            std::cout << view << "\n";
             return {};
+        }
 
         view.remove_prefix(7);
         view.remove_suffix(view.length() - view.find('\n'));
