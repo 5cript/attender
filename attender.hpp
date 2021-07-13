@@ -1,8 +1,8 @@
 #pragma once
 
-#include "attender/tcp_server.hpp"
-#include "attender/tcp_secure_server.hpp"
-#include "attender/tcp_connection.hpp"
+#include "attender/http_server.hpp"
+#include "attender/http_secure_server.hpp"
+#include "attender/http_connection.hpp"
 
 #include "attender/io_context/managed_io_context.hpp"
 #include "attender/io_context/thread_pooler.hpp"

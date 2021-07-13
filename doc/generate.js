@@ -47,4 +47,7 @@ const render = (options) => {
 mkdirSync('./md')
 render(makeOptions())
 
+fs.copyFileSync('./special_files/Home.md', './md/Home.md');
+fs.copyFileSync('./special_files/_Sidebar.md', './md/_Sidebar.md');
+
 var regex = /(\(#\w*\))/ // classattender_1_1request__handler -> class-request_handler

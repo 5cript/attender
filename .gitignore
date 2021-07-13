@@ -7,13 +7,14 @@ main.cpp
 *.layout
 key.pem
 cert.pem
+doc/md
 doc/html/*
 doc/latex/*
 doc/xml/*
 doc/node_modules/*
 doc/.vscode/*
-doc/md/*
 build/*
 x64/*
 .vs/*
 packages/*
+scripts

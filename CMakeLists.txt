@@ -1,5 +1,8 @@
 # Version check
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.20)
+
+# Includes
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake)
 
 # Project
 project(attender)
@@ -25,7 +28,7 @@ add_cxx_compiler_flag("-Wstrict-aliasing")
 add_cxx_compiler_flag("-O3")
 
 # Add files
-file(GLOB_RECURSE sources "attender/*.cpp")
+file(GLOB_RECURSE sources "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
 
 # Add library
 add_library(attender STATIC ${sources})
@@ -38,18 +41,31 @@ find_package(Boost REQUIRED COMPONENTS
 find_library(LSSL ssl)
 find_library(LCRYPTO crypto)
 find_library(LCRYPTOPP cryptopp)
+find_library(LBROTLI_ENC brotlienc)
+find_library(LBROTLI_COMMON brotlicommon)
 
-target_link_libraries(attender PRIVATE Boost::filesystem Boost::system ${LSSL}  ${LCRYPTOPP} ${LCRYPTO})
+target_include_directories(attender PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(attender PUBLIC Boost::filesystem Boost::system ${LSSL} ${LCRYPTOPP} ${LCRYPTO} ${LBROTLI_ENC} ${LBROTLI_COMMON})
 
 # MS SOCK
 if (WIN32)
-	find_library(LWS2_32 ws2_32)
-	find_library(LMSWSOCK mswsock)
-	
-	target_link_libraries(attender PRIVATE  ${LWS2_32} ${LMSWSOCK} ${BCRYPT})
+	target_link_libraries(attender PUBLIC -lws2_32 -lmswsock -latomic -lbcrypt)
 	
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-		target_compile_definitions(attender PRIVATE BOOST_USE_WINDOWS_H=1)
+		target_compile_definitions(attender PUBLIC BOOST_USE_WINDOWS_H=1)
 	endif()
 else()
+endif()
+
+# Compiler Options
+set(DEBUG_OPTIONS -fexceptions -g -Wall -pedantic-errors -pedantic)
+set(RELEASE_OPTIONS -fexceptions -O3)
+target_compile_options(attender PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
+target_compile_options(attender PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
+
+if (ENABLE_TESTING)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()

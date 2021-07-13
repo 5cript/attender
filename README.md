@@ -1,5 +1,6 @@
 # attender
-A windows/linux RESTful webservice server built using boost::asio.
+A windows/linux RESTful webservice server library built using boost::asio.
+(*important!* License changed to more permissive BSL 1.0 on master. Link back is no longer required)
 
 1. [Features](https://github.com/5cript/attender#features)
 2. [Documentation](https://github.com/5cript/attender#documentation)
@@ -39,15 +40,10 @@ This project provides a cmake file (for a static library).
 - cmake ..        (add '-G "MSYS Makefiles"' if you build with msys2)
 - make
 
-There also is a .sln file for Visual Studio users and MSVC. Version 2017 is required for sufficient language support.
+Visual Studio ist not extensively supported or tested. But should work with minor tweaks and a relatively new boost and robust C++17 support.
 When using this library, you have to link **ssl, boost_system, boost_filesystem, ws2_32, pthread, mswsock, atomic.** Depends on your setup and usage.
 
 ## Basics
-### expressjs inspiration
-The library was inspired by express.js. The API is not identical and support is not identical, but if you find this documentation lacking, you can get a first impression at:
-- [ExpressJS Request](https://expressjs.com/en/4x/api.html#req)
-- [ExpressJS Response](https://expressjs.com/en/4x/api.html#res)
-
 ### managed_io_context
 The managed io context is a wrapper for boost::asio::io_service. It accepts some kind of attender::async_model which handels the usage of the io_service. You can subclass attender::async_model and provide your own implementation.
 You can use io_context/thread_pooler.hpp as an example.
@@ -89,7 +85,7 @@ int main()
     managed_io_context <thread_pooler> context;
 
     // create a server
-    tcp_server server(context.get_io_service(),
+    http_server server(context.get_io_service(),
         [](auto* connection, auto const& ec, auto const& exc) {
             // some error occured. (this is not thread safe)
             // You MUST check the error code here, because some codes mean, that the connection went kaputt!
@@ -126,12 +122,12 @@ int main()
     managed_io_context <thread_pooler> context;
 
     // create a server
-    tcp_secure_server server(                     
+    http_secure_server server(                     
         // boost::asio::io_service
         context.get_io_service(),
                              
         // An SSL context
-        std::unique_ptr <attender::ssl_context_interface> {new ssl_example_context("key.pem", "cert.pem")},
+        std::make_unique <attender::ssl_context_interface> {ssl_example_context("key.pem", "cert.pem")},
                              
         // An error callback. (here with OpenSSL demangling)
         [](auto* connection, auto const& ec, auto const& exc) {
@@ -235,59 +231,58 @@ int main()
 
     server.get("/chunky", [](auto req, auto res)
     {
-		// Creates a streaming producer.
-		// The streaming producer is meant as an example implementation of 'producer'.
-		// But it can be used for very very simple data streaming.
-        std::shared_ptr <streaming_producer> produ;
-        produ.reset(new streaming_producer
+        // Creates a streaming producer.
+        // The streaming producer is meant as an example implementation of 'producer'.
+        // But it can be used for very very simple data streaming.
+        auto produ = std::make_shared <streaming_producer>()
             {
                 "identity", // encoding, identity in this case.
                 [&produ]()
                 {
-					// on after setup completion. 
+                    // on after setup completion. 
                 },
                 [](auto ec)
                 {
-					// Some error occured. Most likely error: an aborted connection
+                    // Some error occured. Most likely error: an aborted connection
                     std::cout << "chunky ec: " << ec << "\n";
                 }
             }
         );
 
-		// creating a thread that produces some data to shove into the connection.
-        std::shared_ptr <std::thread> blab{new std::thread([produ](){
-			// wait for the connection to setup.
+        // creating a thread that produces some data to shove into the connection.
+        auto blab = std::make_shared <std::thread>([produ](){
+            // wait for the connection to setup.
             produ->wait_for_consumer();
 
             int c = 0;
-			// while the connection is up:
+            // while the connection is up:
             while(produ->has_consumer_attached())
             {
-				// write into the stream:
+                // write into the stream:
                 *produ << "asdf";
                 std::this_thread::sleep_for(500ms);
                 ++c;
                 if (c > 20)
                 {
-					// this has to be called in order to gracefully end the transmission.
-					// the connection will persist forever otherwise.
+                    // this has to be called in order to gracefully end the transmission.
+                    // the connection will persist forever otherwise.
                     produ->finish();
                     return;
                 }
             }
-        })};
+        });
 
-		// now do the actual call.
+        // now do the actual call.
         res->send_chunked(*produ, [produ, blab](auto e) {
             std::cout << "connection ended" << std::endl;
-			
-			// join the producer thread when the connection ends if joinable.
+            
+            // join the producer thread when the connection ends if joinable.
             if (blab->joinable())
                 blab->join();
         });
-		
-		// do NOT use res anymore here. send_chunked is like send and end in the way
-		// that res must not be used after calling these functions.
+        
+        // do NOT use res anymore here. send_chunked is like send and end in the way
+        // that res must not be used after calling these functions.
     });
     
     server.start(80);
@@ -318,9 +313,9 @@ server.mount("/home/username", "/mnt", [](auto req, auto mres) {
 This is example shows how to get, create and delete a session.
 ```C++
 #include <attender/attender.hpp>
-#include <attender/attender/session/session_manager.hpp>
-#include <attender/attender/session/memory_session_storage.hpp>
-#include <attender/attender/session/uuid_session_cookie_generator.hpp>
+#include <attender/session/session_manager.hpp>
+#include <attender/session/memory_session_storage.hpp>
+#include <attender/session/uuid_session_cookie_generator.hpp>
 
 int main()
 {
@@ -332,7 +327,7 @@ int main()
     };
 
     // normal server for simplicity, secure server ofc also possible.
-    tcp_server server(io_ctx.get_io_service(),
+    http_server server(io_ctx.get_io_service(),
         [](auto* connection, auto const& ec) {
             std::cerr << "ERROR: " << ec << "\n";
         }
