@@ -53,6 +53,11 @@ namespace attender::websocket
         stop();
     }
 //---------------------------------------------------------------------------------------------------------------------
+    boost::asio::ip::tcp::endpoint server::local_endpoint() const
+    {
+        return impl_->acceptor.local_endpoint();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     void server::start(
         std::function<void(std::shared_ptr<connection>)> on_connection,
         std::string const& port, 

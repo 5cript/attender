@@ -179,6 +179,11 @@ namespace attender::websocket
             return impl_->ws_;
         }
 
+        void set_binary_mode(bool binary)
+        {
+            impl_->ws_.binary(binary);
+        }
+
         /**
          * Writes string to the server.
          */
@@ -195,6 +200,7 @@ namespace attender::websocket
         void write(std::string const& data, std::function <void(const boost::system::error_code&, std::size_t)> const& on_completion)
         {
             std::shared_ptr <const std::string> buf = std::make_shared <const std::string>(data);
+            impl_->ws_.
             impl_->ws_.async_write(boost::asio::buffer(buf->data(), buf->size()), [buf, on_completion]
             (
                 boost::system::error_code const& ec,

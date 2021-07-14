@@ -34,6 +34,11 @@ public:
      */
     void stop();
 
+    /**
+     *  Get the local endpoint the server bound on.
+     */
+    boost::asio::ip::tcp::endpoint local_endpoint() const; 
+
 private:
     struct implementation;
     std::shared_ptr <implementation> impl_;

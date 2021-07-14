@@ -33,8 +33,8 @@ namespace attender::websocket
     bool session_base::write_common(char const* begin, std::size_t amount)
     {
         owner_->write_in_progress_.store(true);
-        /*auto amount = */boost::asio::buffer_copy(owner_->write_buffer_.prepare(amount), boost::asio::buffer(std::string_view{begin, amount}));
-        // owner_->write_buffer_.commit(amount);
+        auto bufferCpy = boost::asio::buffer_copy(owner_->write_buffer_.prepare(amount), boost::asio::buffer(std::string_view{begin, amount}));
+        owner_->write_buffer_.commit(bufferCpy);
         owner_->ws_.async_write(
             owner_->write_buffer_.data(),
             boost::asio::bind_executor(

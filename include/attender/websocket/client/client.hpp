@@ -1,6 +1,6 @@
 #pragma once
 
-#include <attender/websocket/websocket_client_base.hpp>
+#include <attender/websocket/client/client_base.hpp>
 
 namespace attender::websocket
 {
