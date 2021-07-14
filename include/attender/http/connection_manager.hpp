@@ -48,7 +48,8 @@ namespace attender
          *  @return The new connection object.
          */
         template <typename T, typename SocketT>
-        std::enable_if <!std::is_pointer_v <SocketT>, tcp_connection_interface*>::type create(tcp_server_interface* server, SocketT&& socket, final_callback const& on_timeout)
+        std::enable_if <!std::is_pointer_v <SocketT>, http_connection_interface*>::type 
+        create(http_server_interface* server, SocketT&& socket, final_callback const& on_timeout)
         {
             std::lock_guard <std::mutex> guard (connectionsLock_);
 

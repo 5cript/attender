@@ -3,7 +3,7 @@
 #include "websocket_client_test_base.hpp"
 #include "client_ssl_context.hpp"
 
-#include <attender/websocket/websocket_secure_client.hpp>
+#include <attender/websocket/client/secure_client.hpp>
 
 #include <memory>
 #include <iostream>

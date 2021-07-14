@@ -2,7 +2,7 @@
 
 #include "websocket_client_test_base.hpp"
 
-#include <attender/websocket/websocket_client.hpp>
+#include <attender/websocket/client/client.hpp>
 
 using namespace std::chrono_literals;
 
