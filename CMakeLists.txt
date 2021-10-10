@@ -1,6 +1,3 @@
-# Version check
-cmake_minimum_required (VERSION 3.20)
-
 # Includes
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake)
 
@@ -47,8 +44,8 @@ find_package(Boost REQUIRED COMPONENTS
 find_library(LSSL ssl)
 find_library(LCRYPTO crypto)
 find_library(LCRYPTOPP cryptopp)
-find_library(LBROTLI_ENC brotlienc-static)
-find_library(LBROTLI_COMMON brotlicommon-static)
+find_library(LBROTLI_ENC brotlienc)
+find_library(LBROTLI_COMMON brotlicommon)
 
 target_include_directories(attender PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

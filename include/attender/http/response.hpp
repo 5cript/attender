@@ -7,6 +7,9 @@
 #include <attender/encoding/producer.hpp>
 
 #include <atomic>
+#include <map>
+#include <string>
+#include <memory>
 
 namespace attender
 {
