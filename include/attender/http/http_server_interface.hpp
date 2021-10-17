@@ -15,7 +15,7 @@ namespace attender
 
         virtual void start(std::string const& port, std::string const& host) = 0;
         virtual void stop() = 0;
-        virtual boost::asio::ip::tcp::endpoint get_local_endpoint() const;
+        virtual boost::asio::ip::tcp::endpoint get_local_endpoint() const = 0;
         virtual settings get_settings() const = 0;
         virtual connection_manager* get_connections() = 0;
     };
