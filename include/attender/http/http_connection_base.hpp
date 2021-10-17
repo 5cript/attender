@@ -351,7 +351,7 @@ namespace attender
                 {
                     bytes_ready_ = bytes_transferred;
                     read_timeout_timer_.expires_from_now(boost::posix_time::pos_infin);
-                    read_callback_inst_(ec);
+                    read_callback_inst_(ec, bytes_transferred);
                 }
             );
         }

@@ -31,7 +31,7 @@ namespace attender
     void request_handler::initiate_header_read(parse_callback on_parse)
     {
         on_parse_ = on_parse;
-        connection_->set_read_callback([this](boost::system::error_code ec) {
+        connection_->set_read_callback([this](boost::system::error_code ec, std::size_t) {
             header_read_handler(ec);
         });
         connection_->read();
@@ -119,7 +119,7 @@ namespace attender
         return std::atoll (body_length.get().c_str());
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void request_handler::body_read_handler(boost::system::error_code ec)
+    void request_handler::body_read_handler(boost::system::error_code ec, std::size_t amount)
     {
         if (ec)
         {
@@ -129,29 +129,21 @@ namespace attender
             return;
         }
 
-        // expected = ContentLength - Amount Read Overall
-        auto expected = get_content_length() - sink_->get_total_bytes_written();
-
         // remaining limit = Min(Amount Read Overall, Maximum Read Allowed)
-        int64_t remaining_limit = 0;
         if (max_read_ != 0)
-            remaining_limit = static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written());
-
-        if (remaining_limit < 0) remaining_limit = 0; // should never happen.
-
-        // limit reached?
-        if (max_read_ != 0 && remaining_limit == 0ll)
         {
-            on_finished_read_.fullfill();
-            return;
+            int64_t remaining_limit = static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written());
+
+            // limit reached?
+            if (remaining_limit == 0ll)
+            {
+                on_finished_read_.fullfill();
+                return;
+            }
         }
 
-        auto write_amount = expected;
-        if (max_read_ != 0)
-            write_amount = std::min(expected, static_cast <request_parser::buffer_size_type> (remaining_limit));
-
         // write into the sink
-        sink_->write(connection_->get_read_buffer(), write_amount);
+        sink_->write(connection_->get_read_buffer(), amount);
 
         // remaining = ContentLength - Amount Read Overall  (after read)
         auto remaining = std::max(static_cast <int64_t> (get_content_length()) - static_cast <int64_t>(sink_->get_total_bytes_written()), static_cast <int64_t> (0));
@@ -167,8 +159,8 @@ namespace attender
         // rearrange the callback for body reading.
         // SEGFAULT here? You are reading, but your connection is already closed.
         // Please dont use the request object after sending or ending on response.
-        connection_->set_read_callback([this](boost::system::error_code ec) {
-            body_read_handler(ec);
+        connection_->set_read_callback([this](boost::system::error_code ec, std::size_t amount) {
+            body_read_handler(ec, amount);
         });
 
         max_read_ = max;
