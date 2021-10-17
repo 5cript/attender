@@ -29,13 +29,12 @@ namespace attender
         }
 
         template <typename T, typename U = void>
-        struct get_io_context
+        struct get_executor
         {
         };
 
-#ifdef WINDOWS
         template <typename T>
-        struct get_io_context <T, std::enable_if_t <!std::is_same_v <T, boost::asio::ip::tcp::socket>>>
+        struct get_executor <T, std::enable_if_t <!std::is_same_v <T, boost::asio::ip::tcp::socket>>>
         {
             static auto ctx(T* sock) -> decltype(auto)
             {
@@ -44,7 +43,7 @@ namespace attender
         };
 
         template <>
-        struct get_io_context <boost::asio::ip::tcp::socket>
+        struct get_executor <boost::asio::ip::tcp::socket>
         {
             using U = boost::asio::ip::tcp::socket;
             static auto ctx(U* sock) -> decltype(auto)
@@ -52,26 +51,6 @@ namespace attender
                 return sock->get_executor();
             }
         };
-#else
-        template <typename T>
-        struct get_io_context <T, std::enable_if_t <!std::is_same_v <T, boost::asio::ip::tcp::socket>>>
-        {
-            static auto ctx(T* sock) -> decltype(auto)
-            {
-                return sock->lowest_layer().get_executor().context();
-            }
-        };
-
-        template <>
-        struct get_io_context <boost::asio::ip::tcp::socket>
-        {
-            using U = boost::asio::ip::tcp::socket;
-            static auto ctx(U* sock) -> decltype(auto)
-            {
-                return sock->get_executor().context();
-            }
-        };
-#endif
     }
 
     /**
@@ -97,7 +76,7 @@ namespace attender
             , write_buffer_{}
             , read_callback_inst_{}
             , bytes_ready_{0}
-            , read_timeout_timer_{internal::get_io_context <SocketT>::ctx(socket)}
+            , read_timeout_timer_{internal::get_executor <SocketT>::ctx(socket)}
             , closed_{false}
             , kept_alive_{nullptr}
             , on_timeout_{on_timeout}
