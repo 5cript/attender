@@ -238,7 +238,7 @@ namespace attender
 
             // if header buffer exhausted & more content & max not reached.
             // = read more if more data is to be expected.
-            if (parser_.is_buffer_empty() && (get_content_length() - from_header_buffer) > 0 && from_header_buffer < max)
+            if (parser_.is_buffer_empty() && (get_content_length() - from_header_buffer) > 0 && (max == 0 || from_header_buffer < max))
                 connection_->read();
             else
                 on_finished_read_.fullfill();
