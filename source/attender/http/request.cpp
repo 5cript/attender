@@ -93,7 +93,7 @@ namespace attender
     {
         if (expects_continue())
         {
-            connection_->write("HTTP/1.1 100 Continue\r\n\r\n", [this, continuation](boost::system::error_code ec, std::size_t){
+            connection_->write("HTTP/1.1 100 Continue\r\n\r\n", [continuation](boost::system::error_code ec, std::size_t){
                 continuation(ec);
             });
             return true;

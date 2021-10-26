@@ -146,7 +146,7 @@ namespace attender
             std::copy(begin, end, write_buffer_.begin());
 
             boost::asio::async_write(*socket_, boost::asio::buffer(write_buffer_),
-                [this, handler](boost::system::error_code ec, std::size_t amount)
+                [handler](boost::system::error_code ec, std::size_t amount)
                 {
                     handler(ec, amount);
                 }
@@ -165,7 +165,7 @@ namespace attender
             (
                 *socket_,
                 boost::asio::buffer(write_buffer_),
-                [this, handler](boost::system::error_code ec, std::size_t amount)
+                [handler](boost::system::error_code ec, std::size_t amount)
                 {
                     handler(ec, amount);
                 }

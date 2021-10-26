@@ -1,5 +1,6 @@
 #pragma once
 
+#include <attender/net_core.hpp>
 #include <boost/system/error_code.hpp>
 
 #include <cstddef>
