@@ -7,7 +7,6 @@
 #include <attender/http/http_connection_interface.hpp>
 
 #include <iosfwd>
-#include <boost/thread/future.hpp>
 #include <unordered_map>
 
 namespace attender
