@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.17)
 
 # Includes
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake)
@@ -10,7 +10,6 @@ function(add_cxx_compiler_flag FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAG}" PARENT_SCOPE)
 endfunction()
 
-
 if(NOT "${CMAKE_CXX_STANDARD}")
 	set(CMAKE_CXX_STANDARD 20)
 endif()
@@ -19,18 +18,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if (NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
-
-# Compiler Options
-add_cxx_compiler_flag("-std=c++17")
-add_cxx_compiler_flag("-Wall")
-add_cxx_compiler_flag("-Wall")
-add_cxx_compiler_flag("-Wextra")
-add_cxx_compiler_flag("-pedantic")
-add_cxx_compiler_flag("-pedantic-errors")
-add_cxx_compiler_flag("-Wfloat-equal")
-add_cxx_compiler_flag("-fstrict-aliasing")
-add_cxx_compiler_flag("-Wstrict-aliasing")
-add_cxx_compiler_flag("-O3")
 
 # Add files
 file(GLOB_RECURSE sources "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
