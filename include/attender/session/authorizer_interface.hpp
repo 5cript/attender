@@ -16,6 +16,8 @@ namespace attender
     class authorizer_interface
     {
     public:
+        virtual ~authorizer_interface() = default;
+
         /**
          *  Supply a realm. Can be anything
          */
