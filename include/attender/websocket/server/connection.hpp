@@ -28,10 +28,10 @@ namespace attender::websocket
         /**
          *  Fill this connection with self defined session that receives events and write data.
          */
-        template <typename T>
-        T& create_session()
+        template <typename T, typename... Args>
+        T& create_session(Args&&... args)
         {
-            session_ = std::make_unique<T>(this);
+            session_ = std::make_unique<T>(this, std::forward<Args>(args)...);
             return *static_cast<T*>(session_.get());
         }
         

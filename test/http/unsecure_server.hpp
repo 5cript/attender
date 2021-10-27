@@ -42,8 +42,8 @@ namespace attender::tests
             return "http://localhost:" + std::to_string(port_) + subUrl;
         }
 
-        template <typename Server>
-        void setupEmpty(Server& server)
+        template <typename BackendControl>
+        void setupEmpty(BackendControl& server)
         {
             server.get("/empty", [](auto, auto res)
             {
@@ -51,8 +51,8 @@ namespace attender::tests
             });
         }
 
-        template <typename Server>
-        void setupHeaderTester(Server& server, std::function <void(request_handler*)> const& tester = [](auto){})
+        template <typename BackendControl>
+        void setupHeaderTester(BackendControl& server, std::function <void(request_handler*)> const& tester = [](auto){})
         {
             server.get("/read_header", [tester](auto req, auto res)
             {
