@@ -114,7 +114,7 @@ namespace attender::websocket
                 return session_->on_close();
 
             if(ec)
-                session_->on_error(ec, "read");
+                return session_->on_error(ec, "read");
 
             if (ws_.got_text())
             {
