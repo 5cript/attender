@@ -31,7 +31,7 @@ namespace attender::websocket
         template <typename T, typename... Args>
         T& create_session(Args&&... args)
         {
-            session_ = std::make_unique<T>(this, std::forward<Args>(args)...);
+            session_ = std::make_shared<T>(this, std::forward<Args>(args)...);
             return *static_cast<T*>(session_.get());
         }
         
@@ -48,7 +48,7 @@ namespace attender::websocket
             , write_buffer_{}
             , on_accept_error_{std::move(on_accept_error)}
             , on_accept_{std::move(on_accept)}
-            , session_{std::make_unique<noop_session>(this)}
+            , session_{std::make_shared<noop_session>(this)}
         {
         }
 
@@ -110,11 +110,11 @@ namespace attender::websocket
             std::size_t bytes_received)
         {
             // This indicates that the session was closed
-            if(ec == boost::beast::websocket::error::closed)
-                return session_->on_close();
+            //if(ec == boost::beast::websocket::error::closed)
+            //    return session_->on_close();
 
             if(ec)
-                return session_->on_error(ec, "read");
+                return session_->on_close();
 
             if (ws_.got_text())
             {
@@ -151,7 +151,7 @@ namespace attender::websocket
         boost::beast::flat_buffer write_buffer_;
         std::function <void(boost::system::error_code ec)> on_accept_error_;
         std::function <void(std::shared_ptr<connection>)> on_accept_;
-        std::unique_ptr <session_base> session_;
+        std::shared_ptr <session_base> session_;
         std::atomic_bool write_in_progress_;
     };
 
