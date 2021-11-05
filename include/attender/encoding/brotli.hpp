@@ -3,6 +3,9 @@
 #include "producer.hpp"
 
 #include <memory>
+#include <vector>
+#include <atomic>
+#include <mutex>
 
 namespace attender
 {

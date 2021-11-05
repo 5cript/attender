@@ -42,14 +42,20 @@ target_include_directories(attender PUBLIC
 
 target_link_libraries(attender PUBLIC Boost::filesystem Boost::system ${LSSL} ${LCRYPTOPP} ${LCRYPTO} ${LBROTLI_ENC} ${LBROTLI_COMMON} -lstdc++)
 
-# MS SOCK
 if (WIN32)
-	target_link_libraries(attender PUBLIC -lws2_32 -lmswsock -latomic -lbcrypt)
+	# MS SOCK
+	target_link_libraries(attender PUBLIC -lws2_32 -lmswsock -lbcrypt)
 	
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		target_compile_definitions(attender PUBLIC BOOST_USE_WINDOWS_H=1)
+	else()
+		target_link_libraries(attender PUBLIC -latomic)
 	endif()
 else()
+endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	target_link_libraries(attender PUBLIC libc++)
 endif()
 
 # Compiler Options
@@ -57,6 +63,7 @@ set(DEBUG_OPTIONS -fexceptions -g -Wall -pedantic-errors -pedantic)
 set(RELEASE_OPTIONS -fexceptions -O3)
 target_compile_options(attender PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 target_compile_options(attender PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
+target_compile_definitions(attender PUBLIC BOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
 
 if (ENABLE_TESTING)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)

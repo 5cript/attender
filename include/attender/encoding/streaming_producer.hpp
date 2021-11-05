@@ -9,6 +9,8 @@
 #include <string_view>
 #include <utility>
 #include <charconv>
+#include <vector>
+#include <mutex>
 
 namespace attender
 {
