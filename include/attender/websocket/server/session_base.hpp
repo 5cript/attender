@@ -22,6 +22,8 @@ public:
     virtual void on_binary(char const* begin, std::size_t amount) = 0;
     virtual void on_error(boost::system::error_code ec, char const* where) = 0;
     virtual void on_write_complete(std::size_t bytes_transferred);
+
+    void close_connection();
     
     bool write_text(std::string_view text, std::function<void(std::size_t)> const& on_complete  = [](auto){});
     bool write_binary(char const* data, std::size_t amount, std::function<void(std::size_t)> const& on_complete = [](auto){});

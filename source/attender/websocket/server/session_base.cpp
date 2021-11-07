@@ -36,6 +36,11 @@ namespace attender::websocket
         return write_common(data, amount, on_complete);
     }
 //---------------------------------------------------------------------------------------------------------------------
+    void session_base::close_connection()
+    {
+        owner_->close();
+    }
+//---------------------------------------------------------------------------------------------------------------------
     bool session_base::write_common(char const* begin, std::size_t amount, std::function<void(std::size_t)> const& on_complete)
     {
         owner_->write_in_progress_.store(true);
