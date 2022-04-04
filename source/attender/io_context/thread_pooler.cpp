@@ -14,7 +14,7 @@ namespace attender
         , context_{context}
         , threads_{}
         , thread_count_{thread_count}
-        , work_{nullptr}
+        , executorWorkGuard_{nullptr}
         , initAction_{std::move(initAction)}
         , exceptAction_{std::move(exceptAction)}
     {
@@ -30,7 +30,9 @@ namespace attender
     {
         std::lock_guard <std::mutex> guard(thread_pool_lock_);
 
-        work_ = std::make_unique <boost::asio::io_service::work> (*context_);
+        executorWorkGuard_ =
+            std::make_unique<boost::asio::executor_work_guard<decltype(context_->get_executor())>>(
+            context_->get_executor());
 
         for (auto i = thread_count_; i; --i)
         {
@@ -61,7 +63,8 @@ namespace attender
     {
         std::lock_guard <std::mutex> guard(thread_pool_lock_);
 
-        work_.reset(nullptr);
+        context_->stop();
+        executorWorkGuard_.reset(nullptr);
 
         for (auto& thread : threads_)
         {

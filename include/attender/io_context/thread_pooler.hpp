@@ -15,7 +15,7 @@ namespace attender
     public:
         thread_pooler
         (
-            asio::io_service* context,
+            asio::io_context* context,
             std::size_t thread_count =
                 std::thread::hardware_concurrency() == 0 ? 4 : std::thread::hardware_concurrency(),
             std::function <void()> initAction = [](){},
@@ -29,11 +29,12 @@ namespace attender
         void teardown_impl() override;
 
     private:
-        asio::io_service* context_;
+        asio::io_context* context_;
         std::vector <std::thread> threads_;
         std::size_t thread_count_;
         std::mutex thread_pool_lock_;
-        std::unique_ptr <boost::asio::io_service::work> work_;
+        std::unique_ptr<boost::asio::executor_work_guard<decltype(context_->get_executor())>>
+            executorWorkGuard_;
         std::function <void()> initAction_;
         std::function <void(std::exception const&)> exceptAction_;
     };
