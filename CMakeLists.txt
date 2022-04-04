@@ -6,6 +6,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake)
 # Project
 project(attender)
 
+option(ATTENDER_LINK_LIBCPP "Link specifically to libc++" OFF)
+
 function(add_cxx_compiler_flag FLAG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAG}" PARENT_SCOPE)
 endfunction()
@@ -54,7 +56,7 @@ if (WIN32)
 else()
 endif()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND ${ATTENDER_LINK_LIBCPP} EQUAL ON)
 	target_link_libraries(attender PUBLIC libc++)
 endif()
 
