@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <string_view>
 #include <mutex>
+#include <functional>
+#include <queue>
 
 namespace attender::websocket
 {
@@ -25,17 +27,31 @@ public:
 
     void close_connection();
     
-    bool write_text(std::string_view text, std::function<void(std::size_t)> const& on_complete  = [](auto){});
-    bool write_binary(char const* data, std::size_t amount, std::function<void(std::size_t)> const& on_complete = [](auto){});
+    /**
+     * Tries to write immediately and can fail if writes are in progress.
+     */
+    bool write_text(std::string_view text, std::function<void(session_base*, std::size_t)> const& on_complete = {});
+
+    /**
+     * Tries to write immediately and can fail if writes are in progress.
+     */
+    bool write_binary(char const* data, std::size_t amount, std::function<void(session_base*, std::size_t)> const& on_complete = {});
+
+    /**
+     * Puts a write on a sequentialized queue. The passed function might be called from 
+     * an undefined asynchronous context or immediately if no writes operations are on the queue.
+     */
+    void enqueue_write(std::function<void(session_base*, std::size_t)> writeOp);
 
     virtual ~session_base() = default;
 
 private:
-    bool write_common(char const* begin, std::size_t amount, std::function<void(std::size_t)> const& on_complete);
+    bool write_common(char const* begin, std::size_t amount, std::function<void(session_base*, std::size_t)> const& on_complete);
 
 private:
     connection* owner_;
-    std::function<void(std::size_t)> on_write_complete_;
+    std::mutex queue_mut_;
+    std::queue<std::function<void(session_base* session, std::size_t)>> enqueued_writes_;
 };
 
 }

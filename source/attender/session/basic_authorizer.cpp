@@ -7,17 +7,13 @@ using namespace std::string_literals;
 
 namespace attender
 {
-//#####################################################################################################################
+    //#####################################################################################################################
     void basic_authorizer::negotiate_authorization_method(request_handler*, response_handler* res)
     {
-        res->append
-        (
-            "WWW-Authenticate",
-            "Basic realm=\""s + realm() + "\", charset=\"UTF-8\""
-        );
+        res->append("WWW-Authenticate", "Basic realm=\""s + realm() + "\", charset=\"UTF-8\"");
         res->status(401).end();
     }
-//---------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------
     authorization_result basic_authorizer::try_perform_authorization(request_handler* req, response_handler* res)
     {
         auto maybeAuth = req->get_header_field("Authorization");
@@ -45,7 +41,7 @@ namespace attender
         {
             base64_decode(value, out);
         }
-        catch(...)
+        catch (...)
         {
             res->status(400).send("Invalid base64 in Authorization");
             return authorization_result::bad_request;
@@ -69,5 +65,5 @@ namespace attender
             return authorization_result::denied;
         }
     }
-//#####################################################################################################################
+    //#####################################################################################################################
 }
