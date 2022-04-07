@@ -191,6 +191,7 @@ namespace attender
         {
             write_buffer_.resize(config::buffer_size);
             stream.read(write_buffer_.data(), config::buffer_size);
+            write_buffer_.resize(stream.gcount());
 
             if (stream.gcount() != 0)
             {
@@ -243,6 +244,8 @@ namespace attender
          */
         void read() override
         {
+            // sets / resets the timer.
+            read_timeout_timer_.expires_from_now(boost::posix_time::seconds(config::read_timeout));
             read_timeout_timer_.async_wait(
                 [this](boost::system::error_code const& ec)
                 {
@@ -343,9 +346,6 @@ namespace attender
     private:
         void do_read()
         {
-            // sets / resets the timer.
-            read_timeout_timer_.expires_from_now(boost::posix_time::seconds(config::read_timeout));
-
             socket_->async_read_some(boost::asio::buffer(buffer_),
                 [this](boost::system::error_code ec, std::size_t bytes_transferred)
                 {

@@ -135,7 +135,7 @@ namespace attender
             int64_t remaining_limit = static_cast <int64_t> (max_read_) - static_cast <int64_t> (sink_->get_total_bytes_written());
 
             // limit reached?
-            if (remaining_limit == 0ll)
+            if (remaining_limit <= 0ll)
             {
                 on_finished_read_.fullfill();
                 return;
