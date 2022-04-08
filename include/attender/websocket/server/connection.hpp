@@ -31,6 +31,128 @@ namespace attender::websocket
         template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
     }
 
+    class connection;
+
+    /// Not yet a websocket.
+    class proto_connection : public  std::enable_shared_from_this<proto_connection>
+    {
+    public:
+        proto_connection(
+            boost::asio::io_context* ctx,
+            boost::asio::ip::tcp::socket&& socket,
+            std::function <void(boost::system::error_code ec)> on_accept_error,
+            std::function <void(std::shared_ptr<connection>)> on_accept,
+            std::unique_ptr<boost::asio::ssl::context>&& security_context
+        )
+            : ctx_{ctx}
+            , security_context_{std::move(security_context)}
+            , socket_{[&socket, this]() -> decltype(socket_) {
+                if (security_context_)
+                    return boost::beast::ssl_stream<boost::beast::tcp_stream>{std::move(socket), *security_context_};
+                else
+                    return boost::beast::tcp_stream{std::move(socket)};
+            }()}
+            , on_accept_error_{std::move(on_accept_error)}
+            , on_accept_{std::move(on_accept)}
+            , upgrade_request_{}
+        {}
+
+        void start()
+        {
+            boost::asio::dispatch(*ctx_, [self = shared_from_this()]()
+            {
+                if (self->security_context_)
+                    self->ssl_handshake();
+                else
+                    self->read_upgrade();
+            });
+        }
+
+    private:
+        void ssl_handshake()
+        {
+            // cannot apply follwing operation on both types of socket.
+            std::visit(detail::overloaded{
+                [this](boost::beast::ssl_stream<boost::beast::tcp_stream>& sock)
+                {
+                    boost::beast::get_lowest_layer(sock).expires_after(std::chrono::seconds(30));
+
+                    sock.async_handshake(
+                        boost::asio::ssl::stream_base::server,
+                        [self = shared_from_this()]<typename T>(T&& ec)
+                        {
+                            self->on_ssl_handshake(std::forward<T>(ec));
+                        }
+                    );
+                },
+                [](auto&)
+                {
+                    // should never end up here.
+                }
+            }, socket_);
+        }
+
+        void on_ssl_handshake(boost::beast::error_code ec)
+        {
+            if(ec)
+                return on_accept_error_(ec);
+
+            with_stream_do([this](auto& sock) {
+                boost::beast::get_lowest_layer(sock).expires_never();
+            });
+
+            read_upgrade();
+        }
+
+        void read_upgrade()
+        {
+            with_stream_do([this](auto& sock) {
+                auto buffer = std::make_shared<boost::beast::flat_buffer>();
+                boost::beast::http::async_read(
+                    sock, 
+                    *buffer, 
+                    upgrade_request_,
+                    [buffer, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred)
+                    {
+                        if (ec)
+                            return self->on_accept_error_(ec);
+                            
+                        if (boost::beast::websocket::is_upgrade(self->upgrade_request_))
+                            self->on_upgrade();
+                        else
+                            self->close();
+                    }
+                );
+            });
+        }
+
+        void on_upgrade();
+        
+        void close()
+        {
+            std::visit(detail::overloaded{
+                [](boost::beast::tcp_stream& stream) {stream.close();},
+                [](boost::beast::ssl_stream<boost::beast::tcp_stream>& stream) {stream.next_layer().close();},
+            }, socket_);
+        }
+
+        template <typename FuncT>
+        void with_stream_do(FuncT&& func) {
+            std::visit(std::forward<FuncT>(func), socket_);
+        }
+
+    private:
+        boost::asio::io_context* ctx_;
+        std::unique_ptr<boost::asio::ssl::context> security_context_;
+        std::variant<
+            boost::beast::tcp_stream,
+            boost::beast::ssl_stream<boost::beast::tcp_stream>
+        > socket_;
+        std::function <void(boost::system::error_code ec)> on_accept_error_;
+        std::function <void(std::shared_ptr<connection>)> on_accept_;
+        boost::beast::http::request<boost::beast::http::string_body> upgrade_request_;
+    };
+
     class connection : public std::enable_shared_from_this<connection>
     {
     public:
@@ -49,13 +171,13 @@ namespace attender::websocket
 
         connection(
             boost::asio::io_context* ctx,
-            boost::asio::ip::tcp::socket&& socket,
+            boost::beast::ssl_stream<boost::beast::tcp_stream>&& socket,
             std::function <void(boost::system::error_code ec)> on_accept_error,
             std::function <void(std::shared_ptr<connection>)> on_accept,
-            boost::asio::ssl::context& securityContext
+            boost::beast::http::request<boost::beast::http::string_body> upgrade_request
         )
             : ws_{
-                boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(socket), securityContext}
+                boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(socket)}
             }
             , strand_(boost::asio::make_strand(*ctx))
             , read_buffer_{}
@@ -63,14 +185,17 @@ namespace attender::websocket
             , on_accept_error_{std::move(on_accept_error)}
             , on_accept_{std::move(on_accept)}
             , session_{std::make_shared<noop_session>(this)}
+            , upgrade_request_{std::move(upgrade_request)}
+            , was_closed_{false}
         {
         }
         
         connection(
             boost::asio::io_context* ctx,
-            boost::asio::ip::tcp::socket&& socket,
+            boost::beast::tcp_stream&& socket,
             std::function <void(boost::system::error_code ec)> on_accept_error,
-            std::function <void(std::shared_ptr<connection>)> on_accept
+            std::function <void(std::shared_ptr<connection>)> on_accept,
+            boost::beast::http::request<boost::beast::http::string_body> upgrade_request
         )
             : ws_{
                 boost::beast::websocket::stream<boost::beast::tcp_stream>{std::move(socket)}
@@ -81,72 +206,14 @@ namespace attender::websocket
             , on_accept_error_{std::move(on_accept_error)}
             , on_accept_{std::move(on_accept)}
             , session_{std::make_shared<noop_session>(this)}
+            , upgrade_request_{std::move(upgrade_request)}
+            , was_closed_{false}
         {
         }
 
         void start()
         {
             with_stream_do([this](auto& ws) {
-                boost::asio::dispatch(ws.get_executor(), [self = shared_from_this()](){
-                    self->with_stream_do([&self](auto& ws) {
-                        if (std::holds_alternative<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(self->ws_))
-                            self->ssl_handshake();
-                        else
-                            self->accept();
-                    });
-                });
-            });
-        }
-        
-        void close()
-        {
-            with_stream_do([this](auto& ws) {
-                ws.async_close(
-                    boost::beast::websocket::close_code::normal,
-                    [shared = shared_from_this()](boost::beast::error_code){
-                        shared->session_->on_close();
-                    }
-                );
-            });
-        }
-
-        template <typename FuncT>
-        void with_stream_do(FuncT&& func) {
-            std::visit(std::forward<FuncT>(func), ws_);
-        }
-
-    private:
-        void ssl_handshake()
-        {
-            // cannot apply follwing operation on both types of socket.
-            std::visit(detail::overloaded{
-                [this](boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>& ws)
-                {
-                    boost::beast::get_lowest_layer(ws).expires_after(std::chrono::seconds(30));
-
-                    ws.next_layer().async_handshake(
-                        boost::asio::ssl::stream_base::server,
-                        boost::beast::bind_front_handler(
-                            &connection::on_ssl_handshake,
-                            shared_from_this()
-                        )
-                    );
-                },
-                [](auto&)
-                {
-                    // should never end up here.
-                }
-            }, ws_);
-        }
-
-        void on_ssl_handshake(boost::beast::error_code ec)
-        {
-            if(ec)
-                return on_accept_error_(ec);
-
-            with_stream_do([this](auto& ws) {
-                boost::beast::get_lowest_layer(ws).expires_never();
-
                 ws.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
 
                 ws.set_option(boost::beast::websocket::stream_base::decorator(
@@ -156,29 +223,58 @@ namespace attender::websocket
                             std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async-ssl");
                     })
                 );
-            });
 
-            accept();
+                ws.async_accept(
+                    upgrade_request_,
+                    [self = shared_from_this()]<typename T>(T&& ec)
+                    {
+                        self->on_accept(std::forward<T>(ec));
+                    }
+                ); 
+            });
         }
 
-        void accept()
+        ~connection()
+        {
+            if (!was_closed_)
+                close_sync();
+        }
+        
+        void close()
         {
             with_stream_do([this](auto& ws) {
-                ws.async_accept(
-                    boost::asio::bind_executor(
-                        strand_,
-                        std::bind(
-                            &connection::on_accept,
-                            shared_from_this(),
-                            std::placeholders::_1
-                        )
-                    )
+                ws.async_close(
+                    boost::beast::websocket::close_code::normal,
+                    [shared = shared_from_this()](boost::beast::error_code){
+                        shared->was_closed_ = true;
+                        shared->session_->on_close();
+                    }
                 );
             });
         }
 
-        void
-        on_accept(boost::system::error_code ec)
+        void close_sync()
+        {
+            with_stream_do([this](auto& ws) {
+                boost::beast::error_code ec;
+                ws.close(boost::beast::websocket::close_code::normal, ec);
+                was_closed_ = true;
+                session_->on_close();
+            });
+        }
+
+        template <typename FuncT>
+        void with_stream_do(FuncT&& func) {
+            std::visit(std::forward<FuncT>(func), ws_);
+        }
+
+        boost::beast::http::request<boost::beast::http::string_body> const& get_upgrade_request() const
+        {
+            return upgrade_request_;
+        }
+
+    private:
+        void on_accept(boost::system::error_code ec)
         {
             if(ec)
                 return on_accept_error_(ec);
@@ -187,20 +283,17 @@ namespace attender::websocket
             do_read();
         }
 
-        void
-        do_read()
+        void do_read()
         {
             with_stream_do([this](auto& ws) {
                 ws.async_read(
                     read_buffer_,
                     boost::asio::bind_executor(
                         strand_,
-                        std::bind(
-                            &connection::on_read,
-                            shared_from_this(),
-                            std::placeholders::_1,
-                            std::placeholders::_2
-                        )
+                        [self = shared_from_this()]<typename T, typename U>(T&& t, U&& u)
+                        {
+                            self->on_read(std::forward<T>(t), std::forward<U>(u));
+                        }
                     )
                 );
             });
@@ -260,6 +353,7 @@ namespace attender::websocket
         std::shared_ptr <session_base> session_;
         std::atomic_bool write_in_progress_;
         std::optional<security_parameters> security_parameters_;
+        boost::beast::http::request<boost::beast::http::string_body> upgrade_request_;
+        bool was_closed_;
     };
-
 }

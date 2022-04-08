@@ -67,21 +67,14 @@ namespace attender::websocket
                         }
                         if (shared->security_context)
                         {
-                            std::make_shared<connection>(
+                            std::make_shared<proto_connection>(
                                 shared->service, 
                                 std::move(socket), 
                                 shared->on_error, 
                                 shared->on_connection,
-                                *shared->security_context
-                            )->start();
-                        }
-                        else
-                        {
-                            std::make_shared<connection>(
-                                shared->service, 
-                                std::move(socket), 
-                                shared->on_error, 
-                                shared->on_connection
+                                shared->security_context ?
+                                    std::make_unique<boost::asio::ssl::context>(std::move(shared->security_context).value()) :
+                                    std::unique_ptr<boost::asio::ssl::context>{}
                             )->start();
                         }
                         shared->do_accept();
