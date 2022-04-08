@@ -2,6 +2,7 @@
 
 #include <attender/net_core.hpp>
 #include <attender/websocket/server/connection.hpp>
+#include <attender/websocket/server/security.hpp>
 
 #include <string>
 #include <memory>
@@ -14,6 +15,7 @@ class server
 {
 public:
     server(boost::asio::io_context* service, std::function <void(boost::system::error_code)> on_error);
+    server(boost::asio::io_context* service, std::function <void(boost::system::error_code)> on_error, security_parameters const& params);
 
     ~server();
 

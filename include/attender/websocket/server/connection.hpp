@@ -7,15 +7,19 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <attender/websocket/server/security.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/beast/ssl/ssl_stream.hpp>
 
 #include <memory>
 #include <functional>
 #include <atomic>
+#include <variant>
+#include <optional>
 
 namespace attender::websocket
 {
@@ -34,6 +38,25 @@ namespace attender::websocket
             session_ = std::make_shared<T>(this, std::forward<Args>(args)...);
             return *static_cast<T*>(session_.get());
         }
+
+        connection(
+            boost::asio::io_context* ctx,
+            boost::asio::ip::tcp::socket&& socket,
+            std::function <void(boost::system::error_code ec)> on_accept_error,
+            std::function <void(std::shared_ptr<connection>)> on_accept,
+            boost::asio::ssl::context& securityContext
+        )
+            : ws_{
+                boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(socket), securityContext}
+            }
+            , strand_(boost::asio::make_strand(*ctx))
+            , read_buffer_{}
+            , write_buffer_{}
+            , on_accept_error_{std::move(on_accept_error)}
+            , on_accept_{std::move(on_accept)}
+            , session_{std::make_shared<noop_session>(this)}
+        {
+        }
         
         connection(
             boost::asio::io_context* ctx,
@@ -41,8 +64,9 @@ namespace attender::websocket
             std::function <void(boost::system::error_code ec)> on_accept_error,
             std::function <void(std::shared_ptr<connection>)> on_accept
         )
-            : socket_(std::move(socket))
-            , ws_(socket_)
+            : ws_{
+                boost::beast::websocket::stream<boost::beast::tcp_stream>{std::move(socket)}
+            }
             , strand_(boost::asio::make_strand(*ctx))
             , read_buffer_{}
             , write_buffer_{}
@@ -54,26 +78,39 @@ namespace attender::websocket
 
         void start()
         {
-            ws_.async_accept(
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &connection::on_accept,
-                        shared_from_this(),
-                        std::placeholders::_1
-                    )
-                )
-            );
+            with_stream_do([this](auto& ws) {
+                boost::asio::dispatch(ws.get_executor(), [self = shared_from_this()](){
+                    self->with_stream_do([&self](auto& ws) {
+                        ws.async_accept(
+                            boost::asio::bind_executor(
+                                self->strand_,
+                                std::bind(
+                                    &connection::on_accept,
+                                    self,
+                                    std::placeholders::_1
+                                )
+                            )
+                        );
+                    });
+                });
+            });
         }
 
         void close()
         {
-            ws_.async_close(
-                boost::beast::websocket::close_code::normal,
-                [shared = shared_from_this()](boost::beast::error_code){
-                    shared->session_->on_close();
-                }
-            );
+            with_stream_do([this](auto& ws) {
+                ws.async_close(
+                    boost::beast::websocket::close_code::normal,
+                    [shared = shared_from_this()](boost::beast::error_code){
+                        shared->session_->on_close();
+                    }
+                );
+            });
+        }
+
+        template <typename FuncT>
+        void with_stream_do(FuncT&& func) {
+            std::visit(std::forward<FuncT>(func), ws_);
         }
 
     private:
@@ -90,18 +127,20 @@ namespace attender::websocket
         void
         do_read()
         {
-            ws_.async_read(
-                read_buffer_,
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &connection::on_read,
-                        shared_from_this(),
-                        std::placeholders::_1,
-                        std::placeholders::_2
+            with_stream_do([this](auto& ws) {
+                ws.async_read(
+                    read_buffer_,
+                    boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                            &connection::on_read,
+                            shared_from_this(),
+                            std::placeholders::_1,
+                            std::placeholders::_2
+                        )
                     )
-                )
-            );
+                );
+            });
         }
 
         void
@@ -116,14 +155,16 @@ namespace attender::websocket
             if(ec)
                 return session_->on_close();
 
-            if (ws_.got_text())
-            {
-                session_->on_text({static_cast <const char*>(read_buffer_.data().data()), bytes_received});
-            }
-            else 
-            {
-                session_->on_binary(static_cast <const char*>(read_buffer_.data().data()), bytes_received);
-            }
+            with_stream_do([this, &bytes_received](auto& ws) {
+                if (ws.got_text())
+                {
+                    session_->on_text({static_cast <const char*>(read_buffer_.data().data()), bytes_received});
+                }
+                else 
+                {
+                    session_->on_binary(static_cast <const char*>(read_buffer_.data().data()), bytes_received);
+                }
+            });
 
             read_buffer_.consume(read_buffer_.size());
             do_read();
@@ -144,8 +185,10 @@ namespace attender::websocket
         }
         
     private:
-        boost::asio::ip::tcp::socket socket_;
-        boost::beast::websocket::stream<boost::asio::ip::tcp::socket&> ws_;
+        std::variant<
+            boost::beast::websocket::stream<boost::beast::tcp_stream>,
+            boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>
+        > ws_;
         boost::asio::strand<boost::asio::io_context::executor_type> strand_;
         boost::beast::flat_buffer read_buffer_;
         boost::beast::flat_buffer write_buffer_;
@@ -153,6 +196,7 @@ namespace attender::websocket
         std::function <void(std::shared_ptr<connection>)> on_accept_;
         std::shared_ptr <session_base> session_;
         std::atomic_bool write_in_progress_;
+        std::optional<security_parameters> security_parameters_;
     };
 
 }

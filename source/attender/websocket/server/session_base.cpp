@@ -42,7 +42,9 @@ namespace attender::websocket
         {
             return false;
         }
-        owner_->ws_.text(true);
+        owner_->with_stream_do([this](auto& ws) {
+            ws.text(true);
+        });
         return write_common(text.data(), text.size(), on_complete);
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -52,7 +54,9 @@ namespace attender::websocket
         {
             return false;
         }
-        owner_->ws_.binary(true);
+        owner_->with_stream_do([this](auto& ws) {
+            ws.binary(true);
+        });
         return write_common(data, amount, on_complete);
     }
 //---------------------------------------------------------------------------------------------------------------------
@@ -68,18 +72,20 @@ namespace attender::websocket
             enqueue_write(on_complete);
         auto bufferCpy = boost::asio::buffer_copy(owner_->write_buffer_.prepare(amount), boost::asio::buffer(std::string_view{begin, amount}));
         owner_->write_buffer_.commit(bufferCpy);
-        owner_->ws_.async_write(
-            owner_->write_buffer_.data(),
-            boost::asio::bind_executor(
-                owner_->strand_,
-                std::bind(
-                    &connection::on_write,
-                    owner_->shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2
+        owner_->with_stream_do([this](auto& ws) {
+            ws.async_write(
+                owner_->write_buffer_.data(),
+                boost::asio::bind_executor(
+                    owner_->strand_,
+                    std::bind(
+                        &connection::on_write,
+                        owner_->shared_from_this(),
+                        std::placeholders::_1,
+                        std::placeholders::_2
+                    )
                 )
-            )
-        );
+            );
+        });
         return true;
     }
 //#####################################################################################################################
