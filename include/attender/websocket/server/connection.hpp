@@ -23,6 +23,14 @@
 
 namespace attender::websocket
 {
+    namespace detail
+    {
+        // helper type for the visitor #4
+        template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+        // explicit deduction guide (not needed as of C++20)
+        template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+    }
+
     class connection : public std::enable_shared_from_this<connection>
     {
     public:
@@ -81,21 +89,15 @@ namespace attender::websocket
             with_stream_do([this](auto& ws) {
                 boost::asio::dispatch(ws.get_executor(), [self = shared_from_this()](){
                     self->with_stream_do([&self](auto& ws) {
-                        ws.async_accept(
-                            boost::asio::bind_executor(
-                                self->strand_,
-                                std::bind(
-                                    &connection::on_accept,
-                                    self,
-                                    std::placeholders::_1
-                                )
-                            )
-                        );
+                        if (std::holds_alternative<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(self->ws_))
+                            self->ssl_handshake();
+                        else
+                            self->accept();
                     });
                 });
             });
         }
-
+        
         void close()
         {
             with_stream_do([this](auto& ws) {
@@ -114,6 +116,67 @@ namespace attender::websocket
         }
 
     private:
+        void ssl_handshake()
+        {
+            // cannot apply follwing operation on both types of socket.
+            std::visit(detail::overloaded{
+                [this](boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>& ws)
+                {
+                    boost::beast::get_lowest_layer(ws).expires_after(std::chrono::seconds(30));
+
+                    ws.next_layer().async_handshake(
+                        boost::asio::ssl::stream_base::server,
+                        boost::beast::bind_front_handler(
+                            &connection::on_ssl_handshake,
+                            shared_from_this()
+                        )
+                    );
+                },
+                [](auto&)
+                {
+                    // should never end up here.
+                }
+            }, ws_);
+        }
+
+        void on_ssl_handshake(boost::beast::error_code ec)
+        {
+            if(ec)
+                return on_accept_error_(ec);
+
+            with_stream_do([this](auto& ws) {
+                boost::beast::get_lowest_layer(ws).expires_never();
+
+                ws.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
+
+                ws.set_option(boost::beast::websocket::stream_base::decorator(
+                    [](boost::beast::websocket::response_type& res)
+                    {
+                        res.set(boost::beast::http::field::server,
+                            std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async-ssl");
+                    })
+                );
+            });
+
+            accept();
+        }
+
+        void accept()
+        {
+            with_stream_do([this](auto& ws) {
+                ws.async_accept(
+                    boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                            &connection::on_accept,
+                            shared_from_this(),
+                            std::placeholders::_1
+                        )
+                    )
+                );
+            });
+        }
+
         void
         on_accept(boost::system::error_code ec)
         {
