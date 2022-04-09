@@ -236,12 +236,14 @@ namespace attender::websocket
 
         ~connection()
         {
-            if (!was_closed_)
-                close_sync();
+            close_sync();
         }
         
         void close()
         {
+            if (was_closed_)            
+                return;
+
             with_stream_do([this](auto& ws) {
                 ws.async_close(
                     boost::beast::websocket::close_code::normal,
@@ -255,6 +257,9 @@ namespace attender::websocket
 
         void close_sync()
         {
+            if (was_closed_)            
+                return;
+
             with_stream_do([this](auto& ws) {
                 boost::beast::error_code ec;
                 ws.close(boost::beast::websocket::close_code::normal, ec);

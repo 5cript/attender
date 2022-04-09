@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <string>
+#include <filesystem>
 
 namespace attender
 {
@@ -23,15 +24,15 @@ namespace attender
         using password_callback_type = std::function <std::string(std::size_t /* maxLength */, boost::asio::ssl::context::password_purpose /* purpose */)>;
 
     public:
-        ssl_example_context(std::string const& private_key_file, std::string const& certificate_file, std::string passphrase);
-        ssl_example_context(std::string const& private_key_file, std::string const& certificate_file, password_callback_type passphrase_provider);
-        ssl_example_context(std::string const& private_key_file, std::string const& certificate_file);
+        ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file, std::string passphrase);
+        ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file, password_callback_type passphrase_provider);
+        ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file);
         ~ssl_example_context() = default;
 
         boost::asio::ssl::context* get_ssl_context() override;
 
     private:
-        void common_context_initialization(std::string const& private_key_file, std::string const& certificate_file);
+        void common_context_initialization(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file);
 
     private:
         boost::asio::ssl::context context_;

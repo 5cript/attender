@@ -7,7 +7,7 @@ namespace ssl = boost::asio::ssl;
 namespace attender
 {
 //#####################################################################################################################
-    ssl_example_context::ssl_example_context(std::string const& private_key_file, std::string const& certificate_file, std::string passphrase)
+    ssl_example_context::ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file, std::string passphrase)
         : ssl_example_context(
             std::move(private_key_file),
             std::move(certificate_file),
@@ -21,13 +21,13 @@ namespace attender
         // DELEGATION! DO NOT PUT ANYTHING HERE
     }
 //---------------------------------------------------------------------------------------------------------------------
-    ssl_example_context::ssl_example_context(std::string const& private_key_file, std::string const& certificate_file)
+    ssl_example_context::ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file)
         : context_{boost::asio::ssl::context::sslv23}
     {
         common_context_initialization(private_key_file, certificate_file);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    ssl_example_context::ssl_example_context(std::string const& private_key_file, std::string const& certificate_file, password_callback_type passphrase_provider)
+    ssl_example_context::ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file, password_callback_type passphrase_provider)
         : context_{boost::asio::ssl::context::sslv23}
     {
         context_.set_password_callback(std::move(passphrase_provider));
@@ -35,7 +35,7 @@ namespace attender
         common_context_initialization(private_key_file, certificate_file);
     }
 //---------------------------------------------------------------------------------------------------------------------
-    void ssl_example_context::common_context_initialization(std::string const& private_key_file, std::string const& certificate_file)
+    void ssl_example_context::common_context_initialization(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file)
     {
         context_.set_options(
                 ssl::context::default_workarounds
@@ -46,8 +46,8 @@ namespace attender
 
         context_.set_verify_mode(ssl::verify_none); // no client certificates
 
-        context_.use_certificate_chain_file(certificate_file.c_str());
-        context_.use_private_key_file(private_key_file.c_str(), ssl::context::pem);
+        context_.use_certificate_chain_file(certificate_file.string());
+        context_.use_private_key_file(private_key_file.string(), ssl::context::pem);
     }
 //---------------------------------------------------------------------------------------------------------------------
     boost::asio::ssl::context* ssl_example_context::get_ssl_context()
