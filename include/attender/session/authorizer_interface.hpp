@@ -6,11 +6,11 @@ namespace attender
 {
     enum class authorization_result
     {
-        denied, // improper auth. End the connection before returning this.
-        negotiate, // need to negotiate method first, client doesnt supply correct method. DO NOT END THE CONNECTION YOURSELF
-        allowed_continue, // success, continue with actual request
-        allowed_but_stop, // success, but dont continue with request (authorizer closes the connection)
-        bad_request // request is malformed. Handler closes connection
+        allowed_continue = 0, // success, continue with actual request
+        denied = 1, // improper auth. End the connection before returning this.
+        negotiate = 2, // need to negotiate method first, client doesnt supply correct method. DO NOT END THE CONNECTION YOURSELF
+        allowed_but_stop = 3, // success, but dont continue with request (authorizer closes the connection)
+        bad_request = 4 // request is malformed. Handler closes connection
     };
 
     class authorizer_interface

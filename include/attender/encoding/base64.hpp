@@ -70,11 +70,11 @@ namespace attender
         bytes.resize(size);
 
         auto backwardsTable = [](int c) -> int {
-            if (c >= (int)'A' && c <= (int)'Z')
+            if (c >= static_cast<int>('A') && c <= static_cast<int>('Z'))
                 return c - 'A';
-            if (c >= (int)'a' && c <= (int)'z')
+            if (c >= static_cast<int>('a') && c <= static_cast<int>('z'))
                 return c - 'a' + 26;
-            if (c >= (int)'0' && c <= (int)'9')
+            if (c >= static_cast<int>('0') && c <= static_cast<int>('9'))
                 return c - '0' + 52;
             if (c == '+')
                 return 62;
@@ -87,7 +87,7 @@ namespace attender
             return 0;
         };
 
-        int j = 0;
+        std::size_t j = 0;
         int b[4];
         for (std::size_t i = 0; i < input.length(); i += 4)
         {
@@ -95,13 +95,13 @@ namespace attender
             b[1] = backwardsTable(input[i + 1]);
             b[2] = backwardsTable(input[i + 2]);
             b[3] = backwardsTable(input[i + 3]);
-            bytes[j++] = (CharType) ((b[0] << 2) | (b[1] >> 4));
+            bytes[j++] = static_cast<CharType>((b[0] << 2) | (b[1] >> 4));
             if (b[2] < 64)
             {
-                bytes[j++] = (CharType) ((b[1] << 4) | (b[2] >> 2));
+                bytes[j++] = static_cast<CharType>((b[1] << 4) | (b[2] >> 2));
                 if (b[3] < 64)
                 {
-                    bytes[j++] = (CharType) ((b[2] << 6) | b[3]);
+                    bytes[j++] = static_cast<CharType>((b[2] << 6) | b[3]);
                 }
             }
         }

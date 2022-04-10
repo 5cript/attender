@@ -22,13 +22,13 @@ namespace attender
     }
 //---------------------------------------------------------------------------------------------------------------------
     ssl_example_context::ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file)
-        : context_{boost::asio::ssl::context::sslv23}
+        : context_{boost::asio::ssl::context::tlsv13}
     {
         common_context_initialization(private_key_file, certificate_file);
     }
 //---------------------------------------------------------------------------------------------------------------------
     ssl_example_context::ssl_example_context(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file, password_callback_type passphrase_provider)
-        : context_{boost::asio::ssl::context::sslv23}
+        : context_{boost::asio::ssl::context::tlsv13}
     {
         context_.set_password_callback(std::move(passphrase_provider));
 
@@ -38,10 +38,7 @@ namespace attender
     void ssl_example_context::common_context_initialization(std::filesystem::path const& private_key_file, std::filesystem::path const& certificate_file)
     {
         context_.set_options(
-                ssl::context::default_workarounds
-            //|   ssl::context::no_sslv2
-            |   ssl::context::single_dh_use
-            |   ssl::context::no_compression
+            ssl::context::default_workarounds
         );
 
         context_.set_verify_mode(ssl::verify_none); // no client certificates

@@ -42,7 +42,7 @@ namespace attender::websocket
         {
             return false;
         }
-        owner_->with_stream_do([this](auto& ws) {
+        owner_->with_stream_do([](auto& ws) {
             ws.text(true);
         });
         return write_common(text.data(), text.size(), on_complete);
@@ -54,7 +54,7 @@ namespace attender::websocket
         {
             return false;
         }
-        owner_->with_stream_do([this](auto& ws) {
+        owner_->with_stream_do([](auto& ws) {
             ws.binary(true);
         });
         return write_common(data, amount, on_complete);

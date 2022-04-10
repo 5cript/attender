@@ -97,7 +97,7 @@ namespace attender::websocket
             if(ec)
                 return on_accept_error_(ec);
 
-            with_stream_do([this](auto& sock) {
+            with_stream_do([](auto& sock) {
                 boost::beast::get_lowest_layer(sock).expires_never();
             });
 
@@ -112,7 +112,7 @@ namespace attender::websocket
                     sock, 
                     *buffer, 
                     upgrade_request_,
-                    [buffer, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes_transferred)
+                    [buffer, self = shared_from_this()](boost::system::error_code ec, std::size_t)
                     {
                         if (ec)
                             return self->on_accept_error_(ec);
