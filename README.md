@@ -1,6 +1,6 @@
 # attender
 
-THIS LIBRARY WILL BE REPLACED WITH: https://github.com/5cript/roar
+THIS LIBRARY WILL WAS REPLACED WITH: https://github.com/5cript/roar
 
 A windows/linux RESTful webservice server library built using boost::asio.
 (*important!* License changed to more permissive BSL 1.0 on master. Link back is no longer required)
